@@ -1,0 +1,1001 @@
+region_psgc_map:
+  ncr: "national capital region"
+  car: "cordillera administrative region"
+  caraga: "region xiii"
+  mimaropa: "mimaropa region"
+  nir: "negros island region"
+  region i: "region i"
+  region ii: "region ii"
+  region iii: "region iii"
+  region iv a: "region iv a"
+  region v: "region v"
+  region vi: "region vi"
+  region vii: "region vii"
+  region viii: "region viii"
+  region ix: "region ix"
+  region x: "region x"
+  region xi: "region xi"
+  region xii: "region xii"
+  armm: null
+  barmm: "bangsamoro autonomous region in muslim mindanao"
+  pso: null
+
+
+provincial_muni_fixes:
+  - province: "isabela"
+    municipality: "cabangan"
+    corrected: "Cabagan"
+
+  - province: "leyte"
+    municipality: "barauen"
+    corrected: "Burauen"
+
+  - province: "bulacan"
+    municipality: "baliuag"
+    corrected: "Baliwag City"
+
+  - province: "batangas"
+    municipality: "santo tomas"
+    corrected: "Sto. Tomas City"
+
+  - province: "batangas"
+    municipality: "calaca"
+    corrected: "Calaca City"
+
+  - province: "nueva vizcaya"
+    municipality: "bagbag"
+    corrected: "Bagabag"
+
+  - province: "cebu"
+    municipality: "pinamungahan"
+    corrected: "Pinamungajan"
+
+  - province: "pampanga"
+    municipality: "santo tomas"
+    corrected: "Sto. Tomas"
+
+  - province: "masbate"
+    municipality: "pio v. corpuz (limbuhan)"
+    corrected: "Pio V. Corpus"
+
+  - province: "bohol"
+    municipality: "pres. carlos p. garcia (pitogo)"
+    corrected: "President Carlos P. Garcia"
+
+  - province: "palawan"
+    municipality: "rizal (marcos)"
+    corrected: "Dr. Jose P. Rizal"
+
+  - province: "maguindanao"
+    municipality: "datu montawal (pagagawan)"
+    corrected: "Pagagawan"
+
+  - province: "maguindanao"
+    municipality: "gen. s. k. pendatun"
+    corrected: "Gen. S.K. Pendatun"
+
+  - province: "bukidnon"
+    municipality: "antapan"
+    corrected: "Lantapan"
+
+  - province: "zamboanga del norte"
+    municipality: "bacungan (leon t. postigo)"
+    corrected: "Leon T. Postigo"
+
+  - province: "manila, ncr, first district"
+    municipality: "tondo"
+    corrected: "Tondo I/II"
+
+  - province: "manila, ncr,  first district" # note extra space
+    municipality: "tondo"
+    corrected: "Tondo I/II"
+
+  - province: "lanao del sur"
+    municipality: "sultan gumander (picong)"
+    corrected: "Picong"
+
+  - province: "lanao del sur"
+    municipality: "bumbaran"
+    corrected: "Amai Manabilang"
+
+
+municipality_fixes:
+  "city malaybalay (capital)": "Malaybalay City"
+  "ozamis city": "Ozamiz City"
+  "kalookan city": "Caloocan City"
+  "kalookon city": "Caloocan City"
+  "bacoor": "Bacoor City"
+  "carmona": "Carmona City"
+  "cabuyao": "Cabuyao City"
+  "imus": "Imus City"
+  "san pedro": "San Pedro City"
+
+
+province_fixes_by_school_id:
+  DAVAO OCCIDENTAL:
+    - 129009
+    - 129066
+    - 465024
+    - 205033
+
+
+special_fixes:
+  - when:
+      region: "barmm"
+      province: "sulu"
+    set:
+      region: "Region IX"
+  - when:
+      region: "barmm"
+      province: "north cotabato"
+    set:
+      region: "Region XII"
+  - when:
+      region: "region xii"
+      province: "city of cotabato"
+    set:
+      region: "BARMM"
+  - when:
+      region: "barmm"
+      province: "city of cotabato"
+    set:
+      province: "Maguindanao del Norte"
+  - when:
+      region: "barmm"
+      municipality: "datu saudi-ampatuan"
+    set:
+      municipality: "Datu Saudi Ampatuan"
+  - when:
+      region: "barmm"
+      municipality: "datu montawal (pagagawan)"
+    set:
+      province: "Maguindanao del Sur"
+  - when:
+      region: "barmm"
+      municipality: "gen. s. k. pendatun"
+    set:
+      province: "Maguindanao del Sur"
+  - when:
+      division: "Munoz Science City"
+    set:
+      division: "Science City of Muñoz"
+  - when:
+      region: "region xi"
+      province: "DAVAO DEL SUR"
+      municipality: "MALITA"
+      division: "davao occidental"
+    set:
+      province: "DAVAO OCCIDENTAL"
+  - when:
+      division: "Taguig"
+      province: "NCR FOURTH DISTRICT"
+    set:
+      division: "Taguig City and Pateros"
+  - when:
+      division: "City of San Jose Del Monte"
+    set:
+      division: "San Jose del Monte City"
+  - when:
+      division: "Compostela Valley"
+    set:
+      division: "Davao De Oro"
+
+nir_rule:
+  provinces:
+    - "negros occidental"
+    - "negros oriental"
+    - "siquijor"
+  set_region: "NIR"
+
+
+maguindanao_split:
+  norte_municipalities:
+    - "barira"
+    - "buldon"
+    - "datu odin sinsuat (dinaig)"
+    - "datu blah t. sinsuat"
+    - "sultan kudarat (nuling)"
+    - "matanog"
+    - "kabuntalan (tumbao)"
+    - "parang"
+    - "sultan mastura"
+    - "talitay"
+    - "upi"
+    - "northern kabuntalan"
+
+  # All municipalities not in norte → Sur
+  sur_is_default: true
+
+
+barangay_corrections:
+  - psgc_muni_id: "0304902000"
+    old: "MAKABACLAY"
+    new: "Macabaclay"
+
+  - psgc_muni_id: "0405645000"
+    old: "GUISGUIS-SAN ROQUE"
+    new: "Guisguis San Roque"
+
+  - psgc_muni_id: "0405645000"
+    old: "CONCEPCION NO. 1"
+    new: "Concepcion 1"
+
+  - psgc_muni_id: "0402119000"
+    old: "CALABUSO NORTH"
+    new: "Calabuso"
+
+  - psgc_muni_id: "0307101000"
+    old: "OWAOG-NIBLOC"
+    new: "Owaog-Nebloc"
+
+  - psgc_muni_id: "0500508000"
+    old: "TANDARORA"
+    new: "Tandarura"
+
+  - psgc_muni_id: "0301419000"
+    old: "TELEPATIO"
+    new: "Telapatio"
+
+  - psgc_muni_id: "0803728000"
+    old: "GIMENARAT WEST"
+    new: "Gimiranat West"
+
+  - psgc_muni_id: "0803728000"
+    old: "GIMENARAT EAST"
+    new: "Gimiranat East"
+
+  - psgc_muni_id: "0803746000"
+    old: "MERCADOHAY"
+    new: "Mercaduhay"
+
+  - psgc_muni_id: "0803746000"
+    old: "GUINGAWAN"
+    new: "Guingauan"
+
+  - psgc_muni_id: "0803724000"
+    old: "CASALUNGAN"
+    new: "Casulongan"
+
+  - psgc_muni_id: "0803717000"
+    old: "HITUMNOG"
+    new: "Hitomnog"
+
+  - psgc_muni_id: "0803701000"
+    old: "ANIBONGAN"
+    new: "Anibongon"
+
+  - psgc_muni_id: "0203118000"
+    old: "CALOOCAN"
+    new: "Calaocan"
+
+  - psgc_muni_id: "1408106000"
+    old: "LT. BILAG"
+    new: "Lt. Balag"
+
+  - psgc_muni_id: "0401005000"
+    old: "TINGA LABAC"
+    new: "Tinga Labak"
+
+  - psgc_muni_id: "0501729000"
+    old: "PAGSANGAHAN"
+    new: "Pagsangaan"
+
+  - psgc_muni_id: "0603019000"
+    old: "BOTONGAN"
+    new: "Botongon"
+
+  - psgc_muni_id: "0603004000"
+    old: "BUDIAWE"
+    new: "Budiaue"
+
+  - psgc_muni_id: "0105545000"
+    old: "DALANGIRING"
+    new: "Dalanguiring"
+
+  - psgc_muni_id: "0105536000"
+    old: "CABOLOAN"
+    new: "Cabuloan"
+
+  - psgc_muni_id: "0105533000"
+    old: "GOMOT"
+    new: "Gumot"
+
+  - psgc_muni_id: "0105531000"
+    old: "BAKITBAKIT"
+    new: "Bakit-Bakit"
+
+  - psgc_muni_id: "0105548000"
+    old: "BOTIQUE"
+    new: "Botigue"
+
+  - psgc_muni_id: "0105504000"
+    old: "KASIKIS"
+    new: "Kisikis"
+
+  - psgc_muni_id: "1206506000"
+    old: "POBLACION II"
+    new: "Aurelio F. Freires"
+
+  - psgc_muni_id: "1705209000"
+    old: "LUMANGBAYAN"
+    new: "Lumambayan"
+
+  - psgc_muni_id: "0803710000"
+    old: "HIBONAWAN"
+    new: "Hibunawan"
+
+  - psgc_muni_id: "0201511000"
+    old: "CAPANIKIAN"
+    new: "Capannikian"
+
+  - psgc_muni_id: "0201511000"
+    old: "CAPANIKIAN"
+    new: "Capannikian"
+
+  - psgc_muni_id: "0201502000"
+    old: "JURISDICTION"
+    new: "Jurisdiccion"
+
+  - psgc_muni_id: "0201528000"
+    old: "BALAGAO"
+    new: "Bulagao"
+
+  - psgc_muni_id: "0305415000"
+    old: "SEPUNG BULAUN"
+    new: "Sepung Bulaon"
+
+  - psgc_muni_id: "0102812000"
+    old: "BGY. NO. 7-A, NSTRA. SRA. DE NATIVIDAD ("
+    new: "Bgy. No. 7-A, Nstra. Sra. De Natividad"
+
+  - psgc_muni_id: "0102812000"
+    old: "BGY. NO. 7-B, NSTRA. SRA. DE NATIVIDAD ("
+    new: "Bgy. No. 7-B, Nstra. Sra. De Natividad"
+
+  - psgc_muni_id: "1704005000"
+    old: "KIÃ‘AMAN"
+    new: "Kinyaman"
+
+  - psgc_muni_id: "0307702000"
+    old: "BIANUAN"
+    new: "Bianoan"
+
+  - psgc_muni_id: "1108205000"
+    old: "NEW MAN-AY"
+    new: "New Manay"
+
+  - psgc_muni_id: "1108205000"
+    old: "TUPAZ"
+    new: "Tupas"
+
+  - psgc_muni_id: "1108209000"
+    old: "ANTIQUERA"
+    new: "Antequera"
+
+  - psgc_muni_id: "0405607000"
+    old: "PINAGSAKAHAN"
+    new: "Pinagsakayan"
+
+  - psgc_muni_id: "0203125000"
+    old: "NAPACCU GRANDE"
+    new: "Nappaccu Grande"
+
+  - psgc_muni_id: "0203125000"
+    old: "NAPACCU PEQUEÃ‘O"
+    new: "Nappaccu Pequeño"
+
+  - psgc_muni_id: "0203125000"
+    old: "SALUCONG"
+    new: "Sallucong"
+
+  - psgc_muni_id: "0203131000"
+    old: "SANTA FILOMINA"
+    new: "Sta. Filomena"
+
+  - psgc_muni_id: "0203132000"
+    old: "BACAREÃ‘A"
+    new: "Bacarreña"
+
+  - psgc_muni_id: "0203121000"
+    old: "DIDDADUNGAN"
+    new: "Didaddungan"
+
+  - psgc_muni_id: "0203117000"
+    old: "ELEONOR (POB.)"
+    new: "Eleanor"
+
+  - psgc_muni_id: "0203115000"
+    old: "PONGPONGAN"
+    new: "Pungpongan"
+
+  - psgc_muni_id: "0203103000"
+    old: "DALIG-KALINGA"
+    new: "Dalig Kalinga"
+
+  - psgc_muni_id: "0203103000"
+    old: "RIZALUNA (LAPUZ)"
+    new: "Rizalina"
+
+  - psgc_muni_id: "1705901000"
+    old: "CAMOD-OM"
+    new: "Comod-om"
+
+  - psgc_muni_id: "1705907000"
+    old: "CAMANDAO"
+    new: "Camandag"
+
+  - psgc_muni_id: "1705911000"
+    old: "BINUGUSAN"
+    new: "Hinugusan"
+
+  - psgc_muni_id: "1705911000"
+    old: "CAGBUAYA"
+    new: "Cagbo-aya"
+
+  - psgc_muni_id: "0306903000"
+    old: "BANCAY 2ND"
+    new: "San Isidro"
+
+  - psgc_muni_id: "0306903000"
+    old: "MANAKEM"
+    new: "Manaquem"
+
+  - psgc_muni_id: "0306903000"
+    old: "PALIMBO-CAAROSIPAN"
+    new: "Palimbo Caarosipan"
+
+  - psgc_muni_id: "0306906000"
+    old: "MATAYUMCAB"
+    new: "Matayuncab"
+
+  - psgc_muni_id: "1400104000"
+    old: "LINGAY"
+    new: "Lingey"
+
+  - psgc_muni_id: "0907201000"
+    old: "SICAYAB BOCANA"
+    new: "Sicayab-Bucana"
+
+  - psgc_muni_id: "0907201000"
+    old: "TAG-OLO"
+    new: "Tag-ulo"
+
+  - psgc_muni_id: "0907303000"
+    old: "DEPILI"
+    new: "Dipili"
+
+  - psgc_muni_id: "0907311000"
+    old: "PANGI (SAN ISIDRO)"
+    new: "Pangi"
+
+  - psgc_muni_id: "0907313000"
+    old: "LUBUSAN"
+    new: "Lubosan"
+
+  - psgc_muni_id: "0907313000"
+    old: "TALABAB"
+    new: "Talabob"
+
+  - psgc_muni_id: "0907317000"
+    old: "LIMABATONG"
+    new: "Limbatong"
+
+  - psgc_muni_id: "1705205000"
+    old: "PUTINGTUBIG"
+    new: "Puting Tubig"
+
+  - psgc_muni_id: "1705209000"
+    old: "DEL RAZON"
+    new: "Delrazon"
+
+  - psgc_muni_id: "0600608000"
+    old: "PIAPE I"
+    new: "Piapi I"
+
+  - psgc_muni_id: "0600608000"
+    old: "PIAPE II"
+    new: "Piapi IIs"
+
+  - psgc_muni_id: "0600608000"
+    old: "PIAPE III"
+    new: "Piapi III"
+
+  - psgc_muni_id: "0600607000"
+    old: "SALAMAGUE (SANTA MARIA)"
+    new: "Samalague"
+
+  - psgc_muni_id: "0600606000"
+    old: "BITAS"
+    new: "Bernaldo A. Julagting"
+
+  - psgc_muni_id: "0600602000"
+    old: "LOMBUYAN"
+    new: "Lumboyan"
+
+  - psgc_muni_id: "0600609000"
+    old: "LOON"
+    new: "Leon"
+
+  - psgc_muni_id: "0600608000"
+    old: "Piapi IIs"
+    new: "Piapi III"
+
+  - psgc_muni_id: "0600616000"
+    old: "BULALACAO"
+    new: "Bululacao"
+
+  - psgc_muni_id: "0600414000"
+    old: "ALIMBO-BAYBAY"
+    new: "Alimbo Baybay"
+
+  - psgc_muni_id: "0600408000"
+    old: "SANTA CRUZ BIGAA"
+    new: "Sta. Cruz Biga-a"
+
+  - psgc_muni_id: "0600408000"
+    old: "SILAKAT-NONOK"
+    new: "Silakat Nonok"
+
+  - psgc_muni_id: "0205010000"
+    old: "TUBONGAN"
+    new: "Tubungan"
+
+  - psgc_muni_id: "0205009000"
+    old: "TOKOD"
+    new: "Tukod"
+
+  - psgc_muni_id: "0205010000"
+    old: "TALECABCAB"
+    new: "Talicabcab"
+
+  - psgc_muni_id: "0205009000"
+    old: "SEGUEM"
+    new: "Siguem"
+
+  - psgc_muni_id: "0205006000"
+    old: "LANGCA"
+    new: "Langka"
+
+  - psgc_muni_id: "0205015000"
+    old: "CAUAYAN"
+    new: "Cawayan"
+
+  - psgc_muni_id: "0205006000"
+    old: "AMPAKLING"
+    new: "Ampakleng"
+
+  - psgc_muni_id: "0205010000"
+    old: "CABALATAN-ALANG"
+    new: "Cabalatan Alang"
+
+  - psgc_muni_id: "0205010000"
+    old: "AMILONG LABENG"
+    new: "Amelong Labeng"
+
+  - psgc_muni_id: "0205009000"
+    old: "BILET"
+    new: "Belet"
+
+  - psgc_muni_id: "0205001000"
+    old: "AMMUEG"
+    new: "Ammoweg"
+
+  - psgc_muni_id: "0205010000"
+    old: "ALANG-SALACSAC"
+    new: "Alang Salacsac"
+
+  - psgc_muni_id: "0500503000"
+    old: "CANARON"
+    new: "Canarom"
+
+  - psgc_muni_id: "0500506000"
+    old: "BGY. 33 - PNR-PEÃ‘ARANDA ST.-IRAYA (POB."
+    new: "Bgy. 33 - PNR-Peñaranda St.-Iraya"
+
+  - psgc_muni_id: "0500503000"
+    old: "CANARON"
+    new: "Canarom"
+
+  - psgc_muni_id: "1380900000"
+    old: "NORTH BAY BLVD., NORTH"
+    new: "North Bay Boulevard North"
+
+  - psgc_muni_id: "1908811000"
+    old: "SADANGIN"
+    new: "Sadangen"
+
+  - psgc_muni_id: "0304906000"
+    old: "NACURALAN"
+    new: "Nagcuralan"
+
+  - psgc_muni_id: "0304908000"
+    old: "MABUGA"
+    new: "Mabunga"
+
+  - psgc_muni_id: "0304911000"
+    old: "CAMILING"
+    new: "Camiing"
+
+  - psgc_muni_id: "0304906000"
+    old: "SINIMBAAN"
+    new: "Simimbaan"
+
+  - psgc_muni_id: "0304908000"
+    old: "MAKABACLAY"
+    new: "Makabaclay"
+
+  - psgc_muni_id: "0806003000"
+    old: "GERAGA-AN"
+    new: "Geragaan"
+
+  - psgc_muni_id: "0806003000"
+    old: "CAGMANIPES SUR"
+    new: "Cagmanipis Sur"
+
+  - psgc_muni_id: "0806003000"
+    old: "GUIMBAOYAN NORTE"
+    new: "Guinbaoyan Norte"
+
+  - psgc_muni_id: "0806003000"
+    old: "GUIMBAOYAN SUR"
+    new: "Guinbaoyan Sur"
+
+  - psgc_muni_id: "0806003000"
+    old: "NAGUMA"
+    new: "Nag-uma"
+
+  - psgc_muni_id: "0806003000"
+    old: "PANONONGAN"
+    new: "Panonongon"
+
+  - psgc_muni_id: "0806003000"
+    old: "TAPA-E"
+    new: "Tapae"
+
+  - psgc_muni_id: "0907201000"
+    old: "SILINOG"
+    new: "Selinog"
+
+  - psgc_muni_id: "0908302000"
+    old: "GUINTOLAN"
+    new: "Guintuloan"
+
+  - psgc_muni_id: "0201528000"
+    old: "VILLA LAIDA"
+    new: "Villalaida"
+
+  - psgc_muni_id: "0201503000"
+    old: "SILANGAN"
+    new: "Silagan"
+
+  - psgc_muni_id: "0201512000"
+    old: "MARACURU"
+    new: "Marracuru"
+
+  - psgc_muni_id: "0201521000"
+    old: "LINNO (VILLA CRUZ*)"
+    new: "Linno-C"
+
+  - psgc_muni_id: "0201521000"
+    old: "DUNGGAN"
+    new: "Dungan"
+
+  - psgc_muni_id: "0201525000"
+    old: "ARIDAWEN"
+    new: "Aridowen"
+
+  - psgc_muni_id: "0201508000"
+    old: "ANTIPORDA"
+    new: "M. Antiporda"
+
+  - psgc_muni_id: "0201525000"
+    old: "ALUCAO WESTE (SAN LORENZO*)"
+    new: "San Lorenzo"
+
+  - psgc_muni_id: "0201504000"
+    old: "ALITUNGTUNG"
+    new: "Alituntung"
+
+  - psgc_muni_id: "0201526000"
+    old: "BALAGAO"
+    new: "Balagan"
+
+  - psgc_muni_id: "0201528000"
+    old: "MALUMIN"
+    new: "Malummin"
+
+  - psgc_muni_id: "0201528000"
+    old: "CULONG"
+    new: "Culung"
+
+  - psgc_muni_id: "0201529000"
+    old: "NAMBBALAN SUR"
+    new: "Namabbalan Sur"
+
+  - psgc_muni_id: "0301422000"
+    old: "MARONGUILLO"
+    new: "Maronquillo"
+
+  - psgc_muni_id: "0301410000"
+    old: "LIYANG"
+    new: "Liang"
+
+  - psgc_muni_id: "0301413000"
+    old: "MINUYAN"
+    new: "Minuyan"
+
+  - psgc_muni_id: "0307101000"
+    old: "BINUCLUTAN"
+    new: "Binoclutan"
+
+  - psgc_muni_id: "1705301000"
+    old: "APORAWAN"
+    new: "Apurawan"
+
+  - psgc_muni_id: "1705301000"
+    old: "APO-APORAWAN"
+    new: "Apoaporawan"
+
+  - psgc_muni_id: "1705320000"
+    old: "MEYTEGUED"
+    new: "Maytegued"
+
+  - psgc_muni_id: "1404406000"
+    old: "BACARNI"
+    new: "Bacarri"
+
+  - psgc_muni_id: "1404401000"
+    old: "OGOOG"
+    new: "Ogo-og"
+
+  - psgc_muni_id: "0402103000"
+    old: "ZAPOTE V"
+    new: "Zapote 3"
+
+  - psgc_muni_id: "1204712000"
+    old: "GOKOTON (GOKOTAN)"
+    new: "Gokoton"
+
+  - psgc_muni_id: "1204712000"
+    old: "BAGOAINGUD (BAGOINGED)"
+    new: "Bagoaingud"
+
+  - psgc_muni_id: "0803717000"
+    old: "MARAGONDONG"
+    new: "Maragongdong"
+
+  - psgc_muni_id: "0102906000"
+    old: "CUBCUBBOOT"
+    new: "Cubcubbuot"
+
+  - psgc_muni_id: "0103305000"
+    old: "ALMIEDA"
+    new: "Almeida"
+
+  - psgc_muni_id: "0105511000"
+    old: "AMAMPEREZ"
+    new: "Amanperez"
+
+  - psgc_muni_id: "0105511000"
+    old: "SANGCAGULIS"
+    new: "Sancagulis"
+
+  - psgc_muni_id: "0105511000"
+    old: "TATARAO"
+    new: "Tatarac"
+
+  - psgc_muni_id: "0105527000"
+    old: "CALUMBOYAN SUR"
+    new: "Calomboyan Sur"
+
+  - psgc_muni_id: "0105545000"
+    old: "BATANGCAOA"
+    new: "Batancaoa"
+
+  - psgc_muni_id: "0105545000"
+    old: "SANTA CATALINA"
+    new: "Sta. Catalina"
+
+  - psgc_muni_id: "1381600000"
+    old: "HEN. T. DE LEON"
+    new: "Gen. T. De Leon"
+
+  - psgc_muni_id: "0806003000"
+    old: "SAN POLICARPIO"
+    new: "San Policarpo"
+
+  - psgc_muni_id: "0806003000"
+    old: "CAGMANIPES NORTE"
+    new: "Cagmanipis Norte"
+
+  - psgc_muni_id: "0806003000"
+    old: "MAGUINO-O"
+    new: "Manguino-o"
+
+  - psgc_muni_id: "1030900000"
+    old: "MAHAYHAY"
+    new: "Mahayahay"
+
+  - psgc_muni_id: "1030900000"
+    old: "SARAY-TIBANGA"
+    new: "Saray"
+
+  - psgc_muni_id: "1030900000"
+    old: "ACMAC"
+    new: "Acmac-Mariano Badelles Sr."
+
+  - psgc_muni_id: "1030900000"
+    old: "TOMINOBO UPPER"
+    new: "Upper Tominobo"
+
+  - psgc_muni_id: "1030900000"
+    old: "TOMINOBO PROPER"
+    new: "Tomas L. Cabili"
+
+  - psgc_muni_id: "0501724000"
+    old: "CONCEPCION PEQUEÑO"
+    new: "Concepcion Pequeña"
+
+  - psgc_muni_id: "0330100000"
+    old: "MALABANIAS"
+    new: "Malabañas"
+
+  - psgc_muni_id: "1401108000"
+    old: "GASWELING"
+    new: "Gaswiling"
+
+  - psgc_muni_id: "1705205000"
+    old: "LUMANG BAYAN"
+    new: "Lumangbayan"
+
+  - psgc_muni_id: "1404406000"
+    old: "PALITOD"
+    new: "Palitud"
+
+  - psgc_muni_id: "0205007000"
+    old: "BINNUANGAN"
+    new: "Binuangan"
+
+  - psgc_muni_id: "0301410000"
+    old: "SANTOL"
+    new: "Santor"
+
+  - psgc_muni_id: "0501730000"
+    old: "GODOFREDO REYES SR. (CATABANGAN CROSSING"
+    new: "Godofredo Reyes Sr."
+
+  - psgc_muni_id: "0500506000"
+    old: "BGY. 17 - RIZAL SREET., ILAWOD (POB.)"
+    new: "Bgy. 17 - Rizal Street., Ilawod"
+
+  - psgc_muni_id: "0500506000"
+    old: "BGY. 16 - KAWIT-EAST WASHINGTON DRIVE (P"
+    new: "Bgy. 16 - Kawit-East Washington Drive"
+
+  - psgc_muni_id: "0403428000"
+    old: "POOK"
+    new: "Pooc"
+
+  - psgc_muni_id: "1102323000"
+    old: "CABAY-ANGAN"
+    new: "Cabayangan"
+
+  - psgc_muni_id: "0305422000"
+    old: "SABITANAN"
+    new: "Sebitanan"
+
+  - psgc_muni_id: "1731500062"
+    old: "BARANGAY NG MGA MANGINGISDA"
+    new: "Mangingisda"
+
+  - psgc_muni_id: "0300804000"
+    old: "MAGSAYSAY STREET"
+    new: "Magsaysay"
+
+  - psgc_muni_id: "0305415000"
+    old: "PULONG SANTOL"
+    new: "Pulung Santol"
+
+  - psgc_muni_id: "0405645000"
+    old: "GUISGUIS-TALON"
+    new: "Guisguis Talon"
+
+  - psgc_muni_id: "0402103000"
+    old: "DIGMAN"
+    new: "Kaingin Digman"
+
+  - psgc_muni_id: "0205009000"
+    old: "NANTAWACAN"
+    new: "Nantawakan"
+
+  - psgc_muni_id: "0205009000"
+    old: "PACQUET (ILONGOT RES.)"
+    new: "Paquet"
+
+  - psgc_muni_id: "1204712000"
+    old: "BULOL"
+    new: "Bulod"
+
+  - psgc_muni_id: "0201506000"
+    old: "IMURONG"
+    new: "Imurung"
+
+  - psgc_muni_id: "0307112000"
+    old: "SIMINUBLAN"
+    new: "Simminublan"
+
+  - psgc_muni_id: "1102317000"
+    old: "VILLARICA (old MONCADO)"
+    new: "Moncado"
+
+  - psgc_muni_id: "0306907000"
+    old: "GUEVARRA"
+    new: "Guevara"
+
+  - psgc_muni_id: "0201519000"
+    old: "ALIMANAO"
+    new: "Alimannao"
+
+  - psgc_muni_id: "1731500000"
+    old: "BARANGAY NG MGA MANGINGISDA"
+    new: "Mangingisda"
+
+  - psgc_muni_id: "1408102000"
+    old: "MAWEGUI"
+    new: "Mawigue"
+
+  - psgc_muni_id: "0600406000"
+    old: "LAGUINBANUA"
+    new: "Laguinbanwa"
+
+  - psgc_muni_id: "1206511000"
+    old: "GANSING"
+    new: "Virginia Griño"
+
+  - psgc_muni_id: "1206511000"
+    old: "LOWER KATUNGAL"
+    new: "Enrique J.C. Montilla"
+
+  - psgc_muni_id: "1430300000"
+    old: "AURORA HILL PROPER (MALVAR-SGT. FLORESCA"
+    new: "Aurora Hill Proper"
+
+  - psgc_muni_id: "1606809000"
+    old: "BENIGNO AQUINO (ZONE I) POB."
+    new: "Benigno Aquino"
+
+  - psgc_muni_id: "1704003000"
+    old: "PINGAN"
+    new: "Pinggan"
+
+  - psgc_muni_id: "1705911000"
+    old: "BINONGAHAN"
+    new: "Binonga-an"
+
+  - psgc_muni_id: "1705322000"
+    old: "DE CARABAO"
+    new: "Carabao"
+
+  - psgc_muni_id: "0102812000"
+    old: "BGY. NO. 13, NSTRA. SRA. DE VISITACION ("
+    new: "Bgy. No. 13, Nstra. Sra. De Visitacion"
+
+  - psgc_muni_id: "0600604000"
+    old: "CENTRO ILAWOD (POB.)"
+    new: "Centro Ilauod"
+
+  - psgc_muni_id: "1003512000"
+    old: "SOGAPOD"
+    new: "Segapod"
+
+  - psgc_muni_id: "0600409000"
+    old: "DALAGSA-AN"
+    new: "Dalagsaan"
+
+  - psgc_muni_id: "0907317000"
+    old: "TULAPOC"
+    new: "Tulapok"
+
+  - psgc_muni_id: "0603025000"
+    old: "BOGONGBONG"
+    new: "Bagongbong"

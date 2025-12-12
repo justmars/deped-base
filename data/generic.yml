@@ -1,0 +1,81 @@
+school_sizes:
+  - id: 1
+    label: Extra Small
+    shorthand: xs
+    minimum: 1
+    maximum: 100
+  - id: 2
+    label: Very Small
+    shorthand: vs
+    minimum: 101
+    maximum: 250
+  - id: 3
+    label: Small
+    shorthand: sm
+    minimum: 251
+    maximum: 500
+  - id: 4
+    label: Medium
+    shorthand: md
+    minimum: 501
+    maximum: 1000
+  - id: 5
+    label: Large
+    shorthand: lg
+    minimum: 1001
+    maximum: 3300
+  - id: 6
+    label: Very Large
+    shorthand: vl
+    minimum: 3301
+    maximum: 8500
+  - id: 7
+    label: Extra Large
+    shorthand: xl
+    minimum: 8501
+    maximum: 13600
+  - id: 8
+    label: Mega
+    shorthand: xxl
+    minimum: 13601
+    maximum: 25000
+
+school_epochs:
+  - id: 1
+    label: bosy
+  - id: 2
+    label: mosy
+  - id: 3
+    label: eosy
+
+school_grades:
+  - label: kinder
+    key_stage: 1
+  - label: esng
+    key_stage: 1
+  - label: g1
+    key_stage: 1
+  - label: g2
+    key_stage: 1
+  - label: g3
+    key_stage: 1
+  - label: g4
+    key_stage: 2
+  - label: g5
+    key_stage: 2
+  - label: g6
+    key_stage: 2
+  - label: g7
+    key_stage: 3
+  - label: g8
+    key_stage: 3
+  - label: g9
+    key_stage: 3
+  - label: g10
+    key_stage: 3
+  - label: jhsng
+    key_stage: 3
+  - label: g11
+    key_stage: 4
+  - label: g12
+    key_stage: 4

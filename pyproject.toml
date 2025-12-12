@@ -1,0 +1,52 @@
+[project]
+name = "foundation"
+requires-python = ">= 3.14.2"
+description = "DepEd Project Bukas enrollment datasets + Philippine Standard Geographic Code (PSGC) + geocoordinates."
+authors = [
+  {name="Marcelino Veloso III", email="hi@mv3.dev" }
+]
+version = "0.0.1"
+dependencies = [
+    # config
+    "environs>=14.3.0",
+    # format logs
+    "rich>=14.1",
+    # cleaning and data handling
+    "pandas>=2.3",
+    # read excel files
+    "openpyxl>=3.1.5",
+    # db setup
+    "sqlite-utils>=3.39",
+    # docs
+    "zensical>=0.0.11",
+]
+
+[dependency-groups]
+dev = [
+    # handle notebooks
+    "jupyter>=1.1.1",
+    "notebook>=7.4.3",
+    "ipykernel>=6.30.1",
+    # testing
+    "pytest>=8.4",
+    "pytest-cov>=5.0",
+]
+
+[project.scripts]
+cli = "foundation:remake"
+
+[tool.uv]
+package = true
+
+[tool.pytest.ini_options]
+minversion = "8.4"
+addopts = "-ra -q -vv --cov --doctest-modules"
+testpaths = ["tests", "src"]
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+ignore = ["F401", "F403", "E501"]
+fixable = ["F", "E", "W", "I001"]
+select = ["F", "E", "W", "I001"]

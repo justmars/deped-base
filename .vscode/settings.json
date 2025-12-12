@@ -1,0 +1,47 @@
+{
+  "editor.fontLigatures": true,
+  "python.testing.pytestArgs": [
+    "--exitfirst",
+    "--verbose"
+  ],
+  "[python]": {
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "always",
+      "source.fixAll.ruff": "always",
+      "source.organizeImports.ruff": "explicit"
+    }
+  },
+  "[jupyter]": {
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "always",
+      "source.fixAll.ruff": "always",
+      "source.organizeImports.ruff": "explicit"
+    }
+  },
+  "[javascript]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+  },
+  "yaml.schemas": {
+    "https://squidfunk.github.io/mkdocs-material/schema.json": "mkdocs.yml"
+  },
+  "markdownlint.config": {
+    "MD024": false,
+    "MD034": false,
+    "MD046": false,
+    "MD052": false,
+  },
+  "files.associations": {
+    "**/env.example": "dotenv", // handles 1password templates
+    "**/env.example.*": "dotenv", // handles 1password templates
+    "**/*.html": "jinja-html",
+    "**/*.sql": "jinja-sql",
+    "**/*.pgsql": "jinja-sql",
+    "*.css": "tailwindcss"
+  },
+  "emmet.includeLanguages": {
+    "jinja-html": "html"
+  },
+}
