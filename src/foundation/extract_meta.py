@@ -312,7 +312,7 @@ def unpack_enroll_data(
     cleaned_meta = clean_meta_location_names(meta)
 
     # Normalize school names
-    rprint("[blue]Cleaning school names names...[/blue]")
+    rprint("[blue]Cleaning school names...[/blue]")
     cleaned_meta["school_name"] = cleaned_meta["school_name"].apply(clean_school_name)
 
     # Enrollment dataset

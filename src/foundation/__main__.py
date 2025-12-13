@@ -46,6 +46,7 @@ def build():
 
     # add main tables
     target = env.path("DB_FILE")
+    skl = env.str("MAIN_TABLE")
     db = Database(target, use_counts_table=True)
     db.enable_wal()
 
@@ -83,12 +84,12 @@ def build():
     db = set_enrollment_tables(db=db, df=enroll_df, src_table="enroll")
 
     # add the geo dataframe as the base table
-    db = add_to(db=db, df=geo_df.rename(columns={"school_id": "id"}), table_name="base")
+    db = add_to(db=db, df=geo_df.rename(columns={"school_id": "id"}), table_name=skl)
 
     # connect the enroll table to the base table
     db["enroll"].add_foreign_key(  # type: ignore
         column="school_id",
-        other_table="base",
+        other_table=skl,
         other_column="id",
     )
 
@@ -98,7 +99,7 @@ def build():
     # add foreign keys from the base table to psgc
     cols = ["psgc_region_id", "psgc_provhuc_id", "psgc_muni_id", "psgc_brgy_id"]
     for col in cols:
-        db["base"].add_foreign_key(col, "psgc", "id")  # type: ignore
+        db[skl].add_foreign_key(col, "psgc", "id")  # type: ignore
 
     db.close()
 
