@@ -20,9 +20,14 @@ def remake():
 def prep():
     """Assumes generics.yml file, to populate target db."""
     src = env.path("GENERIC_FILE")
-    target = env.path("DB_FILE")
-    rprint(f"Detected: {src=}; (re)-building {target=}")
+    if not src.exists():
+        raise FileNotFoundError(f"Generic file {src=} does not exist.")
 
+    target = env.path("DB_FILE")
+    if not target.exists():
+        raise FileNotFoundError(f"Target database file {target=} does not exist.")
+
+    rprint(f"Using: {src=}; [red]rebuilding[/red] {target=}")
     db = Database(target, recreate=True, use_counts_table=True)
     db.enable_wal()
 
@@ -41,14 +46,18 @@ def prep():
 @remake.command("build")
 def build():
     """Populates the target database file with contents from /data."""
-    # extract data sources
-    psgc_df, enroll_df, geo_df, levels_df = extract_dataframes()
-
     # add main tables
     target = env.path("DB_FILE")
-    skl = env.str("MAIN_TABLE")
+    if not target.exists():
+        raise FileNotFoundError(f"Target database file {target=} does not exist.")
+
+    base = env.str("MAIN_TABLE")
+    rprint(f"Populating: {target=}; [red]main table[/red] {base=}")
     db = Database(target, use_counts_table=True)
     db.enable_wal()
+
+    # extract data sources
+    psgc_df, enroll_df, geo_df, levels_df = extract_dataframes()
 
     # the school years table will be created based on the enroll dataframe
     db = add_to(
@@ -84,12 +93,12 @@ def build():
     db = set_enrollment_tables(db=db, df=enroll_df, src_table="enroll")
 
     # add the geo dataframe as the base table
-    db = add_to(db=db, df=geo_df.rename(columns={"school_id": "id"}), table_name=skl)
+    db = add_to(db=db, df=geo_df.rename(columns={"school_id": "id"}), table_name=base)
 
     # connect the enroll table to the base table
     db["enroll"].add_foreign_key(  # type: ignore
         column="school_id",
-        other_table=skl,
+        other_table=base,
         other_column="id",
     )
 
@@ -99,7 +108,7 @@ def build():
     # add foreign keys from the base table to psgc
     cols = ["psgc_region_id", "psgc_provhuc_id", "psgc_muni_id", "psgc_brgy_id"]
     for col in cols:
-        db[skl].add_foreign_key(col, "psgc", "id")  # type: ignore
+        db[base].add_foreign_key(col, "psgc", "id")  # type: ignore
 
     db.close()
 

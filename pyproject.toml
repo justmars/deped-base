@@ -18,7 +18,7 @@ dependencies = [
     # db setup
     "sqlite-utils>=3.39",
     # docs
-    "zensical>=0.0.11",
+    "zensical>=0.0.13",
 ]
 
 [dependency-groups]
