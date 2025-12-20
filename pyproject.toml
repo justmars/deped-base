@@ -10,7 +10,7 @@ dependencies = [
     # config
     "environs>=14.3.0",
     # format logs
-    "rich>=14.1",
+    "rich>=14.2",
     # cleaning and data handling
     "pandas>=2.3",
     # read excel files
