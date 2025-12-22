@@ -16,6 +16,13 @@ uv sync --all-extras # will create the foundation package, see pyproject.toml
 source .venv/bin/activate # enter virtual environment
 ```
 
+**For Windows**
+```sh
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex" # install uv
+uv sync --all-extras # will create the foundation package, see pyproject.toml
+.venv\Scripts\Activate.ps1 # enter virtual environment
+```
+
 ## Run
 
 Rename env.example to `.env` (contains the name of the `DB_FILE`, set to `deped.db`).
@@ -24,6 +31,12 @@ Rename env.example to `.env` (contains the name of the `DB_FILE`, set to `deped.
 cli # show the different commands
 cli prep # deped.db created w/ some generic tables
 cli build # populates deped.db from /data files
+```
+
+**For Windows**
+```sh
+python -m foundation prep # deped.db created w/ some generic tables
+python -m foundation build # populates deped.db from /data files
 ```
 
 ## Docs
