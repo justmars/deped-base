@@ -2872,7 +2872,7 @@ id,school_name,longitude,latitude
 103055,Calabayan Elementary School,121.7407968,16.7541937
 103056,Consular Elementary School,121.76028,16.78819
 103058,Dalakip Elementary School,121.7314583,16.7905117
-103060,Datu Manangka Matanggo Elementary School,,
+103060,Datu Manangka Matanggo Elementary School,125.31314,6.41936
 103061,Gnanda B. Maguan Ip School,125.4322439,5.9508016
 103062,Rancho Primary School,125.3450139,6.00210833
 103063,Minanga Elementary School,121.7300163,16.7656292
@@ -10427,7 +10427,7 @@ id,school_name,longitude,latitude
 111139,Bagong Bayan Elementary School,119.567571,10.431469
 111140,Bagong Silang Elementary School,119.176356,10.268362
 111141,Buayan Elementary School,119.239517,10.296312
-111142,Candelaria Elementary School,119.1944357,10.3321031
+111142,Candelaria Elementary School,119.194766355437,10.3317794171829
 111143,Caramay Elementary School,119.23833,10.181408
 111145,Dumarao Elementary School,119.36999,10.45127
 111146,Green Island Elementary School,119.4944692,10.268215
@@ -10445,7 +10445,7 @@ id,school_name,longitude,latitude
 111158,Mendoza Elementary School,119.41004,10.40488
 111159,Narra Elementary School,119.3646221,10.3505137
 111160,New Barbacan Elementary School,119.349727,10.328998
-111161,New Cuyo Elementary School,119.26235,10.28553
+111161,New Cuyo Elementary School,119.263239044857,10.2856393386254
 111162,Rizal Elementary School,119.261563,10.23302
 111163,Rodriguez Elementary School,119.38736,10.400887
 111164,Roxas North Central School,119.349196,10.339053
@@ -10476,7 +10476,7 @@ id,school_name,longitude,latitude
 111189,Tranquilino L. Oblan Elementary School,119.3039,10.5655
 111190,Irawan Elementary School,119.3304245,10.6500136
 111191,Kemdeng Elementary School,119.250864,10.476776
-111192,Macatumbalen Elementary School,119.26999,10.51827
+111192,Macatumbalen Elementary School,119.270745937321,10.5187820076485
 111193,New Agutaya Elementary School,119.2791975,10.5389457
 111194,New Canipo Elementary School,119.345507,10.715804
 111195,New Caruray Elementary School,119.016145,10.302282
@@ -29238,13 +29238,13 @@ id,school_name,longitude,latitude
 131610,Pinagala–An Elementary School,125.80383,8.74387
 131611,San Isidro Elementary School,125.7786846,8.6773998
 131612,Sinadyap Elementary School,125.7835093,8.7081667
-131613,Villa Ondayon Elementary School,125.859724,8.7308319
+131613,Villa Ondayon Elementary School,125.858980067515,8.72840596927961
 131614,Wilderness Elementary School,125.8392262,8.8061815
 131615,Agusan Del Sur Pilot Laboratory School,125.751343,8.714583
 131616,Bayugan Central Elementary School SPED Center,125.7519789,8.7163601
 131617,Bitoon Elementary School,125.7143568,8.6709797
 131618,Cagbas Elementary School,125.7315932,8.7001003
-131619,Calaitan Elementary School,125.7806377,8.7673494
+131619,Calaitan Elementary School,125.482401799506,8.82030428762238
 131620,Charito Elementary School,125.7536,8.66338
 131621,Gamao Elementary School,125.7391778,8.6644472
 131622,New Bohol Elementary School,125.7987251,8.7819925
@@ -29257,7 +29257,7 @@ id,school_name,longitude,latitude
 131629,Claro Cortes Elementary School,125.7331037,8.7688713
 131630,Mabuhay Elementary School,125.7100832,8.7698136
 131631,Mahayag Elementary School,125.75239,8.7996028
-131632,Maygatasan Elementary School,125.7178899,8.705473
+131632,Maygatasan Elementary School,125.721108250775,8.71027840912122
 131633,Montevista Elementary School,125.6779261,8.7263112
 131634,Mt. Ararat Elementary School,125.8309329,8.8275339
 131635,Mt. Bulawan Elementary School,125.8685719,8.8328667
@@ -29450,7 +29450,7 @@ id,school_name,longitude,latitude
 131838,Karaos Elementary School,125.9745812,8.4915897
 131839,Ladgadan Elementary School,125.9334337,8.4899279
 131840,Lucac Elementary School,125.963127,8.562139
-131841,Pisaan Elementary School,125.8777898,8.4600533
+131841,Pisaan Elementary School,125.953176135424,8.52973779310162
 131842,Pudlosan Elementary School,125.877834,8.4599563
 131843,Rizal Elementary School,125.8711538,8.4880603
 131844,San Francisco Pilot Central Elementary School,125.9831338,8.5059782
@@ -29470,9 +29470,9 @@ id,school_name,longitude,latitude
 131859,San Francisco West Central Elementary School,125.971055,8.5080373
 131860,San Isidro Elementary School,125.9676877,8.4800339
 131861,Afga Central Elementary School,125.6570269,8.8724579
-131862,Anahawan Elementary School,125.65875,8.82428
+131862,Anahawan Elementary School,125.662358018442,8.84446399389468
 131864,Banag–Banag Elementary School,125.7467467,8.9115864
-131865,Causwagan Elementary School,125.682823,8.8045386
+131865,Causwagan Elementary School,125.841210561185,8.44696067367916
 131866,Dandanon Elementary School,125.7305221,8.9868184
 131867,Del Rosario Elementary School,125.7059699,8.8525839
 131868,El Rio Elementary School,125.671829,8.860268
@@ -29482,7 +29482,7 @@ id,school_name,longitude,latitude
 131874,Magkalape Elementary School,125.7041091,8.9082745
 131875,Magsaysay Elementary School,125.73672,8.900175
 131876,Mahayahay Elementary School,125.684788,8.841258
-131878,New Tubigon Elementary School,125.8381,8.93587
+131878,New Tubigon Elementary School,125.825286711786,8.8864652179401
 131879,Padiay Elementary School,125.7411389,8.9688175
 131881,Perez Elementary School,125.7336045,8.9356182
 131882,San Isidro I Elementary School,125.7334379,8.8865557
@@ -29491,14 +29491,14 @@ id,school_name,longitude,latitude
 131885,San Vicente Elementary School,125.7020062,8.8077097
 131886,Sinai Elementary School,125.6677995,8.7869123
 131887,Sibagat Central Elementary School,125.6955304,8.8238864
-131888,Sta. Cruz Elementary School,125.79,8.695
+131888,Sta. Cruz Elementary School,125.724456258895,8.91152215546998
 131889,Sta. Maria Elementary School,125.6867222,8.8956009
 131890,Tabontabon Elementary School,125.6584118,8.9014102
-131891,Tag–Oyango Elementary School,125.67,8.79
+131891,Tag–Oyango Elementary School,125.704767325049,8.81909798032879
 131892,Villangit Elementary School,125.730772,8.8573979
 131893,Alma Elementary School,125.9020555,8.0652958
 131894,Anilao Elementary School,125.95271085864,8.00454258120607
-131895,Anitap Elementary School,125.8498,8.0351
+131895,Anitap Elementary School,125.832935195789,7.96124120403913
 131896,Bacay Elementary School,125.8822996,8.0869119
 131897,Basilica Elementary School,125.9004934,8.0282424
 131898,Baubo Elementary School,125.9246241,8.006592
@@ -29526,23 +29526,23 @@ id,school_name,longitude,latitude
 131922,Veruela Central Elementary School,125.9539694,8.0722389
 131924,Aurora Elementary School,126.0179847,8.0088959
 131925,Malipayon Elementary School,126.0440962,8.0480796
-131926,Pag–Asa Elementary School,126.0440962,8.0480796
+131926,Pag–Asa Elementary School,126.00204689587,8.07522667030081
 131928,San Jose Elementary School,126.0006071,8.0020745
 131930,San Vicente Elementary School,126.001801,8.0750297
-131931,Sayon Elementary School,125.9836086,7.9827377
+131931,Sayon Elementary School,125.987803139055,7.98283255600272
 131932,Simeon S. Castor Elementary School,126.0095644,7.983773
 131933,Sta. Isabel Elementary School,126.0338756,8.0105781
-131934,Sta. Josefa Central Elementary School With SPED Program,126.024086,7.981127
-131936,Anislagan Elementary School,125.7966,8.5992
+131934,Sta. Josefa Central Elementary School With SPED Program,126.026600183545,7.9897675544344
+131936,Anislagan Elementary School,125.798912681008,8.59836873084613
 131937,Dop Balit Ip School (Ipa),125.6889213,8.4867542
 131939,Baylo Elementary School,125.7322514,8.4456488
-131940,Cecilia Elementary School,125.7829535,8.5557651
+131940,Cecilia Elementary School,125.785034113962,8.55364294416984
 131942,Culi Elementary School,125.7651754,8.4982969
 131943,Datu Bandahan Elementary School,125.6797045,8.3899526
 131944,Datu Sandigan Elementary School,125.6915545,8.4071423
 131945,Dimasalang Elementary School,125.718509,8.5468955
 131946,Don Pedro Primary School,125.734191,8.5430655
-131947,Dona Maxima Elementary School,125.7448025,8.4770031
+131947,Dona Maxima Elementary School,125.740484039576,8.50362419054023
 131951,Kalilid Elementary School,125.7353765,8.4949853
 131953,Laminga Central Elementary School,125.7216373,8.4472287
 131954,Mahagsay Elementary School,125.5081572,8.4824575
@@ -29556,10 +29556,10 @@ id,school_name,longitude,latitude
 131965,Santiago Elementary School,125.7520217,8.5605246
 131966,Sta. Ines Elementary School,125.7271907,8.5215263
 131968,Tambo Elementary School,125.5254693,8.3754005
-131969,Wegguam Elementary School,125.760324,8.5840765
+131969,Wegguam Elementary School,125.76403402184,8.58539736035865
 131970,Buena Gracia Elementary School,125.8021849,8.419883
 131971,Causwagan Elementary School,125.84212,8.4446739
-131972,Cebuna Elementary School,125.8375404,8.4822835
+131972,Cebuna Elementary School,124.88876035054,10.3494363259721
 131973,Concillo Elementary School,125.8201361,8.5152596
 131974,Corpuz Elementary School,125.8013494,8.5291975
 131975,Cortes Elementary School,125.820329,8.477232
@@ -29589,7 +29589,7 @@ id,school_name,longitude,latitude
 132001,Isdaon Elementary School,126.0552484,8.019736
 132002,Kapatungan Elementary School,126.0314706,8.0807676
 132003,Langkila–An Elementary School,126.08759,7.96744
-132004,Maica Elementary School,126.1112992,8.0750043
+132004,Maica Elementary School,126.046892163948,8.07944789719495
 132005,Manat Elementary School,126.0878491,8.0934168
 132006,Melfreda Elementary School,126.1140307,7.9908465
 132007,Pangyan Elementary School,126.294812,8.0949108
@@ -29606,7 +29606,7 @@ id,school_name,longitude,latitude
 132018,Trento Central Elementary School,126.062291,8.046705
 132019,Trento West Central Elementary SPED Center,126.060554,8.0441166
 132020,Tudela Elementary School,126.1021911,8.0676369
-132021,Upper Manat Elementary School,126.0951269,8.1000058
+132021,Upper Manat Elementary School,126.12465,8.12011
 132022,Upper New Visayas Elementary School,126.1229802,7.9614492
 132023,Butuan Central Elementary School,125.54325,8.946245
 132024,Bading Elementary School,125.535655505658,8.96554183372999
@@ -29921,7 +29921,7 @@ id,school_name,longitude,latitude
 132356,Boa Elementary School,125.6587,10.1172
 132357,Borja Elementary School,125.685853712647,9.86610069408945
 132358,Cabiton–An Elementary School,125.6175173,10.1531968
-132359,Cabungaan Elementary School,125.651626,9.920528
+132359,Cabungaan Elementary School,125.651579359643,9.9315744684926
 132360,Cagdianao Central Elementary School,125.6700701,9.9227125
 132361,Del Pilar Elementary School,125.671306,9.995065
 132362,Lahi Elementary School,125.6577254,9.9510415
@@ -33595,7 +33595,7 @@ id,school_name,longitude,latitude
 136463,Trinidad Tecson Elementary School,120.997536,14.606057
 136464,Moises Salvador Elementary School,120.9983613,14.605209
 136465,Juan Luna Elementary School,120.989726,14.605593
-136466,V E. Fugoso Memorial School,121.1179398,14.6660112
+136466,V E. Fugoso Memorial School,,
 136467,P. Burgos Elementary School,121.010676,14.6033842
 136468,Pedro Pelaez Elementary School,121.006476606682,14.6041703230698
 136470,Gen. Miguel Malvar Elementary School,121.0097,14.6062
@@ -34080,7 +34080,7 @@ id,school_name,longitude,latitude
 136996,Sindungan Elementary School,125.442528,8.305278
 136997,Tagbalihaw Elementary School,125.6451988,8.1418901
 136998,Tagpangi Elementary School,125.5355549,8.3738827
-136999,Talaandig Ip Elementary School,125.8027267,8.422791
+136999,Talaandig Ip Elementary School,125.456522055415,8.29349792922743
 137000,Legaspi Elementary School,125.8157583,8.8057361
 137001,Kilaug Primary School,124.9511737,8.2775682
 137003,Bantilan Elementary School,121.43353,13.8359
@@ -34984,7 +34984,7 @@ id,school_name,longitude,latitude
 170538,Binalabag Elementary School,119.9313014,11.5846719
 170539,Benecan Elementary School,120.156208,12.111511
 170540,Pedro Baquiao Memorial Elementary School,119.3333369,10.3197185
-170541,Dinet Elementaryschool,119.667118,11.023167
+170541,Dinet Elementaryschool,119.666491181541,11.0237238563549
 170542,Capalan Elementary School,119.159879,10.30993
 170544,Bulno Elementary School,117.380523,8.72858
 170545,Tulapos Elementary School,117.75539,9.05349
@@ -35011,7 +35011,7 @@ id,school_name,longitude,latitude
 170566,Trinidad Cario Elementary School,119.356303,10.481903
 170567,Rancho II Elementary School,117.668687,9.042151
 170568,Sincab Elementary School,117.9798217,9.0725983
-170570,Ching Bing Kao Elementary School,119.701562,11.0436
+170570,Ching Bing Kao Elementary School,119.701539995032,11.0433064976461
 170571,Bethlehem Elementary School,118.297726,9.281006
 170572,Gugnan Elementary School,117.888516,9.195365
 170573,Tarumpitao Point Elementary School,117.632861,9.0470761
@@ -35809,7 +35809,7 @@ id,school_name,longitude,latitude
 201016,Palayan Primary School,123.8221438,8.4220976
 201017,Gata Diot Primary School,123.8495186,8.1868963
 201018,Sibuyon Elementary School,123.575565,8.10969
-201019,Sitio Piduan Annex Elementary School,,
+201019,Sitio Piduan Annex Elementary School,123.56384,8.2747
 201020,Virayan Primary School,123.563564,8.408215
 201502,Mananum Daan Elementary School,124.9933772,8.9032885
 201503,Lonsi Elementary School,124.429786,8.473717
@@ -36112,7 +36112,7 @@ id,school_name,longitude,latitude
 211501,Tabon Elementary School,125.29734,8.95851
 211503,Cabayugan Elementary School,125.44374,8.81549
 211504,Dahikan Elementary School,125.53439,9.06345
-211505,Bokbokon Elementary School,125.32878,8.74218
+211505,Bokbokon Elementary School,125.32821,8.74794
 211506,Datu Saldong Domino Elementary School,125.3909272,8.7759593
 211507,San Juan Elementary School,125.46455,8.98511
 211508,Mangumihay Elementary School,125.30945,8.85522
@@ -41488,7 +41488,7 @@ id,school_name,longitude,latitude
 304661,Kidapawan City National High School,125.0880215,7.0084543
 304662,Juan P. Jalipa Memorial High School,125.1121387,7.0718657
 304663,Kalaisan National High School,125.0423256,7.0039244
-304664,Mt. Apo National High School,,
+304664,Mt. Apo National High School,125.2052,7.02931
 304665,Saniel Cruz National High School,125.087241,7.0178507
 304666,Spottswood National High School,125.08709,6.99731
 304667,Onica National High School,124.9573233,7.0347054
@@ -41551,7 +41551,7 @@ id,school_name,longitude,latitude
 304726,New Tubigon High School Of Home Industries,125.8258132,8.8850969
 304727,Tambad High School,124.862,7.42546
 304728,Noli National High School,125.7219081,8.7442013
-304729,Calaitan National High School,125.782768,8.78586
+304729,Calaitan National High School,125.777457885222,8.76886070620191
 304730,Patin–Ay National High School,125.9386443,8.5501167
 304731,Prosperidad National High School,125.9136939,8.5987544
 304732,Salvacion National High School,125.715723,8.6855423
@@ -41660,8 +41660,8 @@ id,school_name,longitude,latitude
 304836,Melgar National High School,125.526893,10.06311
 304837,Placer National High School,125.597413,9.653433
 304838,Lakandula National High School,125.644581,9.677119
-304839,Plaridel National High School,125.49984,10.128686
-304840,R. E. Ecleo Sr. National High School,125.640912,9.938653
+304839,Plaridel National High School,125.497547471454,10.13060350327
+304840,R. E. Ecleo Sr. National High School,125.64151880916,9.9386965376222
 304841,Rizal National High School,125.509675,9.998223
 304842,Puerto Princesa National High School,125.481676,10.103892
 304843,San Francisco National High School,125.4242599,9.7756569
@@ -42106,7 +42106,7 @@ id,school_name,longitude,latitude
 305304,Esteban Abada High School,120.9941821,14.621894
 305306,Ramon Magsaysay High School,120.993179725616,14.6111063249656
 305307,Claro M. Recto High School,120.9947558,14.5999675
-305308,Valeriano E. Fugoso Memorial High School,121.1167188,14.6651207
+305308,Valeriano E. Fugoso Memorial High School,,
 305309,M.Araullo High School,120.985325,14.5834692
 305310,Carlos P. Garcia High School,121.00287,14.59495
 305311,Manila High School,120.9785471,14.5890905
@@ -42627,7 +42627,7 @@ id,school_name,longitude,latitude
 305855,Tamped High School,124.9262655,7.2488594
 305856,Bangkal High School,125.2202163,7.0984105
 305857,San Fernando Open& Night High School,,
-305859,Langayen–Zt Hamid High School,,
+305859,Langayen–Zt Hamid High School,124.5754375,7.0696025
 305860,Don Panaca High School,125.2235886,7.1258741
 305861,Cagbolo Senior High School,125.034240506612,10.6522547515931
 305862,Minuhang Stand Alone Senior High School,124.75772,11.337258
@@ -42732,7 +42732,7 @@ id,school_name,longitude,latitude
 305968,Sinariri High School,121.3441904,12.5177405
 305969,Bato High School,,
 305970,Kisandal High School,125.1795644,7.0618995
-305971,Ilian High School,,
+305971,Ilian High School,125.18205,7.09988
 305972,Uling Senior High School,123.7122081,10.2817312
 305973,Santa Ignacia National High School,120.4421996,15.6195774
 305974,Sto. Niño National High School,120.99455,14.49986
@@ -44643,7 +44643,7 @@ id,school_name,longitude,latitude
 317430,San Jose National High School,125.8408877,8.6765072
 317431,Magaud National High School,125.8177413,8.1968184
 317432,Labnig National High School,125.8017647,8.4513681
-317433,Buena Gracia National High School,125.796055,8.417827
+317433,Buena Gracia National High School,125.795688686201,8.41760271764792
 317434,Marbon National High School,125.777278,8.380137
 317435,Maharlika High School,125.8597863,8.3616269
 317437,Salvacion National High School,126.01444,8.09955
@@ -45235,7 +45235,7 @@ id,school_name,longitude,latitude
 340131,"Senior High School In Lubuagan, Kalinga",121.1790365,17.3554378
 340155,Natonin Stand Alone Senior High School,121.2388,17.0924
 340204,"Senior High School In Carmen, Agusan Del Norte",125.2931068,8.9889448
-340297,Fili National High School,125.7751778,8.7122861
+340297,Fili National High School,125.775224711036,8.71147466765826
 340306,Stand Alone Senior High School,126.3336231,8.1838123
 340337,Butuan City Senior High School Stand Alone,125.600299,8.976115
 340341,La Union Senior High School (Stand Alone),125.53721,9.07922
@@ -45466,7 +45466,7 @@ id,school_name,longitude,latitude
 500045,Sudlon Elementary School,123.7850297,10.3764383
 500046,Gulayon Integrated School,123.364821068456,8.55943423861438
 500047,Buenavista SPED Integrated School,125.40853,8.97617
-500048,Lawan–Lawan Integrated School,125.3938065,8.7348378
+500048,Lawan–Lawan Integrated School,125.39925,8.73959
 500049,Manapa II Integrated School,125.44915,8.98076
 500050,Esperanza Integrated School,125.94307,9.22637
 500051,Andres Bonifacio Integrated School,121.0348484,14.5862136
@@ -45830,7 +45830,7 @@ id,school_name,longitude,latitude
 500416,Taocanga Integrated School,126.3909364,7.2634152
 500417,"Jose Antop, Sr. San Isidro Integrated School",126.5193003,7.2662716
 500418,Tapaz Elementary School,125.9939947,8.020943
-500419,Angas Elementary School,126.0233686,7.9818355
+500419,Angas Elementary School,126.033402864679,7.97102028268613
 500421,Sillon Integrated School,123.7710768,11.1971363
 500422,Sulangan Integrated School,123.72654,11.14096
 500423,Calero Integrated School,123.9999482,10.3647921
@@ -46247,7 +46247,7 @@ id,school_name,longitude,latitude
 500945,Capilan Integrated School,124.20774,6.70855
 500946,Artemio L. Martin Integrated School,124.087309,6.578784
 500951,San Pascual Integrated School,126.0014303,7.9672213
-500952,Singapore Integrated School,126.2044906,8.0139205
+500952,Singapore Integrated School,126.229013967512,8.07369478690273
 500953,Lambangan Integrated School,124.9341,6.2527
 500961,Ubojan Integrated School,124.0920568,9.8860897
 500962,Bacnit Integrated School,124.71039,9.12482
