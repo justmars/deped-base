@@ -23,10 +23,8 @@ def prep():
     if not src.exists():
         raise FileNotFoundError(f"Generic file {src=} does not exist.")
 
+    # database will be created (or remade, if already existing) here
     target = env.path("DB_FILE")
-    if not target.exists():
-        raise FileNotFoundError(f"Target database file {target=} does not exist.")
-
     rprint(f"Using: {src=}; [red]rebuilding[/red] {target=}")
     db = Database(target, recreate=True, use_counts_table=True)
     db.enable_wal()

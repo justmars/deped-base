@@ -29,6 +29,10 @@ def extract_dataframes() -> tuple[
     # Match school meta df from enrolment files with psgc df from the PSA
     meta_df = match_psgc_schools(psgc_df=psgc_df, school_location_df=school_df)
 
+    # Clean annex status field
+    meta_df["annex_status"] = meta_df["annex_status"].str.strip().str.lower()
+
     # Add longitude / latitude coordinates, determine outliers
     geo_df = set_coordinates(geo_file=geo_file, meta_df=meta_df)
+
     return (psgc_df, enroll_df, geo_df, levels_df)
