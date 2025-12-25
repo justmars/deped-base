@@ -11,9 +11,7 @@ from .clean_school_names import clean_school_name
 # -----------------------------------------
 # 1. Constants (Centralized)
 # -----------------------------------------
-META_COLS = [
-    "sector",
-    "school_management",
+ADDRESS_COLS = [
     "school_id",
     "school_name",
     "region",
@@ -24,14 +22,24 @@ META_COLS = [
     "legislative_district",
     "division",
     "school_district",
-    "annex_status",
 ]
 
-OFFER_COLS = ["offers_es", "offers_jhs", "offers_shs"]
+
+META_COLS = ["sector", "school_management", "annex_status"] + ADDRESS_COLS
+
+
+OFFER_COLS = [
+    "offers_es",
+    "offers_jhs",
+    "offers_shs",
+]
 
 LONG_COLS = [
     "school_year",
     "school_id",
+    "sector",
+    "school_management",
+    "annex_status",
     "grade",
     "sex",
     "strand",
@@ -168,6 +176,10 @@ def process_enrollment_folder(folder_path: Path) -> pd.DataFrame:
     for col in COLS_TO_CLEAN:
         df_long[col] = df_long[col].str.replace(r"\s+", " ", regex=True).str.strip()
 
+    # Clean annex status field
+    df_long["annex_status"] = df_long["annex_status"].str.strip().str.lower()
+
+    # Clean street addresses
     df_long["street_address"] = (
         df_long["street_address"]
         .str.lower()
@@ -305,7 +317,7 @@ def unpack_enroll_data(
 
     # Latest metadata per school_id
     rprint("[blue]Keeping only most recent school metadata...[/blue]")
-    meta = df_sorted[META_COLS].drop_duplicates(subset=["school_id"], keep="first")
+    meta = df_sorted[ADDRESS_COLS].drop_duplicates(subset=["school_id"], keep="first")
 
     # Clean location names
     rprint("[blue]Cleaning location names...[/blue]")

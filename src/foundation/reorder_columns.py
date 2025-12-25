@@ -39,14 +39,7 @@ def reorganize_school_geo_df(df: pd.DataFrame) -> pd.DataFrame:
 
     barangay_fields = ["barangay", "psgc_brgy_id"]
 
-    attributes = [
-        "school_district",
-        "legislative_district",
-        "street_address",
-        "sector",
-        "school_management",
-        "annex_status",
-    ]
+    other_fields = ["school_district", "legislative_district", "street_address"]
 
     # --- build final ordered column list ---
     ordered_columns = (
@@ -56,7 +49,7 @@ def reorganize_school_geo_df(df: pd.DataFrame) -> pd.DataFrame:
         + province_fields
         + municipality_fields
         + barangay_fields
-        + attributes
+        + other_fields
     )
 
     # Include any remaining columns automatically (if dataset expands)
