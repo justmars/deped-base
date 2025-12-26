@@ -156,7 +156,9 @@ def load_and_melt_file(path: Path) -> pd.DataFrame:
 # -----------------------------------------
 # 4. Process an entire folder
 # -----------------------------------------
-def process_enrollment_folder(folder_path: Path) -> pd.DataFrame:
+def process_enrollment_folder(
+    folder_path: Path, test_only: bool = False
+) -> pd.DataFrame:
     """Load all CSV files under a folder and output one unified long-form dataframe."""
     folder = Path(folder_path)
     if not folder.exists():
@@ -165,6 +167,8 @@ def process_enrollment_folder(folder_path: Path) -> pd.DataFrame:
         raise ValueError(f"Expected a folder, got a file: {folder_path}")
 
     files = sorted(folder.glob("*.csv"))
+    if test_only:
+        files = files[-1:]  # only process last file for testing
     if not files:
         raise ValueError("No CSV files found in folder.")
 
@@ -298,37 +302,68 @@ def make_school_year_offered_levels(df_long: pd.DataFrame) -> pd.DataFrame:
 # 5. Extract metadata (latest year per school) and full enrollment
 # -----------------------------------------
 def unpack_enroll_data(
-    enrolment_folder: Path,
+    enrolment_folder: Path, test_only: bool = False
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Output:
-    - meta (latest metadata per school_id)
-    - enroll (long enrollment dataset for all years)
     """
-    df_long = process_enrollment_folder(folder_path=enrolment_folder)
-
-    rprint("[blue]Extracting school levels into separate df...[/blue]")
-    school_year_offered_levels = make_school_year_offered_levels(df_long)
-
-    # Sort by school + school_year descending so first occurrence = newest (prior to dropping non-latest values)
-    rprint("[blue]Sorting consolidated enrollment data...[/blue]")
-    df_sorted = df_long.sort_values(
-        ["school_id", "school_year"], ascending=[True, False]
+    Outputs:
+    - school_year_meta: school-year–level metadata (PSGC-agnostic)
+    - enroll: long enrollment facts
+    - school_year_offered_levels
+    """
+    df_long = process_enrollment_folder(
+        folder_path=enrolment_folder, test_only=test_only
     )
 
-    # Latest metadata per school_id
-    rprint("[blue]Keeping only most recent school metadata...[/blue]")
-    meta = df_sorted[ADDRESS_COLS].drop_duplicates(subset=["school_id"], keep="first")
+    rprint("[blue]Extracting school-year offered levels...[/blue]")
+    school_year_offered_levels = make_school_year_offered_levels(df_long)
 
-    # Clean location names
-    rprint("[blue]Cleaning location names...[/blue]")
-    cleaned_meta = clean_meta_location_names(meta)
+    # -----------------------------
+    # School-year metadata (NO collapsing)
+    # -----------------------------
+    REVISED_COLS = [
+        "school_year",
+        "school_id",
+        "school_name",
+        "sector",
+        "school_management",
+        "annex_status",
+        "region",
+        "province",
+        "municipality",
+        "barangay",
+        "street_address",
+        "legislative_district",
+        "division",
+        "school_district",
+    ]
 
-    # Normalize school names
-    rprint("[blue]Cleaning school names...[/blue]")
-    cleaned_meta["school_name"] = cleaned_meta["school_name"].apply(clean_school_name)
+    rprint("[blue]Extracting school-year metadata...[/blue]")
+    school_year_meta = (
+        df_long[REVISED_COLS]
+        .drop_duplicates(["school_id", "school_year"])
+        .reset_index(drop=True)
+    )
 
-    # Enrollment dataset
-    rprint("[blue]Extracting enrollment data...[/blue]")
-    enroll = df_long[LONG_COLS].copy()
+    # Clean location + school names *once*
+    rprint("[blue]Cleaning school-year metadata...[/blue]")
+    school_year_meta = clean_meta_location_names(school_year_meta)
+    school_year_meta["school_name"] = school_year_meta["school_name"].apply(
+        clean_school_name
+    )
 
-    return cleaned_meta, enroll, school_year_offered_levels
+    # -----------------------------
+    # Enrollment facts (thin)
+    # -----------------------------
+    rprint("[blue]Extracting enrollment facts...[/blue]")
+    enroll = df_long[
+        [
+            "school_year",
+            "school_id",
+            "grade",
+            "sex",
+            "strand",
+            "num_students",
+        ]
+    ].copy()
+
+    return school_year_meta, enroll, school_year_offered_levels

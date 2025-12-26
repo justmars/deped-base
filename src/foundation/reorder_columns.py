@@ -28,17 +28,11 @@ def reorganize_school_geo_df(df: pd.DataFrame) -> pd.DataFrame:
 
     # --- define column groups ---
     school_identifiers = ["school_id", "school_name"]
-
     division_fields = ["division", "division_id"]
-
     region_fields = ["region", "psgc_region_id"]
-
     province_fields = ["province", "psgc_provhuc_id"]
-
     municipality_fields = ["municipality", "psgc_muni_id"]
-
     barangay_fields = ["barangay", "psgc_brgy_id"]
-
     other_fields = ["school_district", "legislative_district", "street_address"]
 
     # --- build final ordered column list ---

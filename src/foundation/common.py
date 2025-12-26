@@ -2,6 +2,7 @@ import re
 import sqlite3
 import time
 import unicodedata
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -16,6 +17,27 @@ from sqlite_utils import Database
 
 env = Env()
 env.read_env()
+
+
+@dataclass
+class SchoolDataBundle:
+    # Reference
+    psgc: pd.DataFrame | None = None
+
+    # Core facts
+    enroll: pd.DataFrame | None = None
+    levels: pd.DataFrame | None = None
+
+    # Metadata (progressively enriched)
+    school_year_meta: pd.DataFrame | None = None
+    meta_psgc: pd.DataFrame | None = None
+
+    # Address normalization outputs
+    addresses: pd.DataFrame | None = None
+    school_address_year: pd.DataFrame | None = None
+
+    # Geo outputs
+    geo: pd.DataFrame | None = None
 
 
 def prep_table(db: Database, table_name: str, values: list[dict]):

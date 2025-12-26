@@ -9,6 +9,8 @@ This project integrates data from these sources to generate a single sqlite file
 > [!IMPORTANT]
 > The longitude / latitude file is presently generated through a third-party repository. This should be integrated here in the future.
 
+The resulting database is a time-aware, PSGC-anchored education data warehouse that separates enrollment facts, school-year metadata, geographic identity, and address normalization—designed for accurate analytics, mapping, and policy use.
+
 ## Development
 
 ```sh
