@@ -17,6 +17,7 @@ class SourcePaths:
     geo_file: Path
     region_names_file: Path
     hr_dir: Path
+    dropout_dir: Path
 
 
 @dataclass(frozen=True)

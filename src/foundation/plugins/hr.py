@@ -210,8 +210,8 @@ class TeachersExtractor(BaseExtractor):
     """Load teacher headcount Excel files and expose them to the pipeline."""
 
     name = "teachers"
+    depends_on = ["school_year_meta", "enrollment", "school_levels"]
     outputs = ["teachers"]
-    depends_on = ["psgc"]
 
     def extract(
         self,

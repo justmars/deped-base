@@ -18,6 +18,7 @@ Each extractor now participates in that pipeline as a discrete plugin: it declar
 | 5 | `AddressDimensionExtractor` | Builds canonical `_addr_hash` + address bridge table. | [Address extractor](/docs/plugins/address.md) |
 | 6 | `GeoExtractor` | Joins coordinates plus address IDs to enrich the geography fact table. | [Geodata extractor](/docs/plugins/geodata.md) |
 | 7 | `TeachersExtractor` | Loads HR teacher workbooks, normalizes the headcount columns by level, and exposes `teachers` + lookup tables for downstream analytics. | [Teacher plugin](/docs/plugins/hr.md) |
+| 8 | `DropoutsExtractor` | Normalizes the per-year dropout workbooks, keeps provenance metrics, and emits the `dropouts` fact table for the warehouse. | [Dropouts plugin](/docs/plugins/dropouts.md) |
 
 Any new extractor that follows this contract plugs into `cli build` automatically; no further orchestration edits are required. The pipeline log will print `[green]Validated schema[/green] <table>` once every table passes validation.
 

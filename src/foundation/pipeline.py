@@ -57,6 +57,7 @@ class PluginPipeline:
         project_root = Path(__file__).resolve().parents[1].parent
         default_region_file = project_root / "data" / "regions.yml"
         default_hr_dir = project_root / "data" / "hr"
+        default_dropout_dir = project_root / "data" / "dropout"
         try:
             region_names_file = env.path("REGION_NAMES_FILE")
         except EnvError:
@@ -65,6 +66,10 @@ class PluginPipeline:
             hr_dir = env.path("HR_DIR")
         except EnvError:
             hr_dir = default_hr_dir
+        try:
+            dropout_dir = env.path("DROPOUT_DIR")
+        except EnvError:
+            dropout_dir = default_dropout_dir
 
         for label, path in (
             ("enroll_dir", enroll_dir),
@@ -72,6 +77,7 @@ class PluginPipeline:
             ("geo_file", geo_file),
             ("region_names_file", region_names_file),
             ("hr_dir", hr_dir),
+            ("dropout_dir", dropout_dir),
         ):
             self.console.log(f"[bold slate_blue1]{label}[/bold slate_blue1]={path}")
 
@@ -81,6 +87,7 @@ class PluginPipeline:
             geo_file=geo_file,
             region_names_file=region_names_file,
             hr_dir=hr_dir,
+            dropout_dir=dropout_dir,
         )
 
     def _load_plugins(self) -> dict[str, BaseExtractor]:

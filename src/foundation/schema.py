@@ -178,6 +178,30 @@ TEACHERS_SCHEMA = TableSchema(
     ],
 )
 
+DROPOUTS_SCHEMA = TableSchema(
+    name="dropouts",
+    primary_key=[
+        "school_year",
+        "school_id",
+        "grade",
+        "sex",
+        "strand",
+        "source_file",
+        "source_row",
+    ],
+    columns=[
+        ColumnDef("school_year", pl.Utf8, nullable=False),
+        ColumnDef("school_id", pl.Utf8, nullable=False),
+        ColumnDef("grade", pl.Utf8, nullable=False),
+        ColumnDef("strand", pl.Utf8),
+        ColumnDef("sex", pl.Utf8, nullable=False),
+        ColumnDef("num_dropouts", pl.Int64),
+        ColumnDef("source_file", pl.Utf8, nullable=False),
+        ColumnDef("source_row", pl.Int64, nullable=False),
+        ColumnDef("ingested_at", pl.Datetime),
+    ],
+)
+
 SCHEMAS = {
     "psgc": PSGC_SCHEMA,
     "enrollment": ENROLLMENT_SCHEMA,
@@ -188,4 +212,5 @@ SCHEMAS = {
     "geo": GEO_SCHEMA,
     "region_names": REGION_NAMES_SCHEMA,
     "teachers": TEACHERS_SCHEMA,
+    "dropouts": DROPOUTS_SCHEMA,
 }

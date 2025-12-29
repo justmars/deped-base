@@ -1,5 +1,4 @@
 import os
-import pathlib
 import tempfile
 from pathlib import Path
 
@@ -7,6 +6,8 @@ import polars as pl
 import pytest
 import yaml
 from openpyxl import Workbook
+
+from src.foundation.plugins import dropouts as dropouts_module
 
 
 @pytest.fixture
@@ -196,6 +197,107 @@ def sample_hr_xlsx(temp_dir):
     return hr_dir
 
 
+def _row_with_values(
+    length: int, values: dict[int, object | None]
+) -> list[object | None]:
+    row = [None] * length
+    for idx, value in values.items():
+        if idx >= len(row):
+            row.extend([None] * (idx - len(row) + 1))
+        row[idx] = value
+    return row
+
+
+def _create_dropout_workbook(directory: Path, cfg: dict):
+    indexes = dropouts_module._parse_usecols(cfg["cols"]) or []
+    if len(indexes) < 2:
+        raise ValueError("Need at least two columns (school_id + grade columns)")
+
+    num_columns = max(indexes) + 1
+    school_id_idx = indexes[0]
+    grade_idx = indexes[1]
+    grade_label = {
+        "2022": "G11 ACAD Male Dropout",
+        "2023": "Grade 1 Male Dropout",
+        "2024": "dropout_g1_male",
+    }[cfg["schema"]]
+
+    school_id_value = 420001
+
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = cfg["sheet_name"]
+
+    def append_empty_rows(count: int):
+        for _ in range(count):
+            sheet.append([])
+
+    if "header" in cfg:
+        header_index = cfg["header"]
+        append_empty_rows(header_index)
+        sheet.append(
+            _row_with_values(
+                num_columns,
+                {
+                    school_id_idx: cfg["school_id_col"],
+                    grade_idx: grade_label,
+                },
+            )
+        )
+        sheet.append(
+            _row_with_values(
+                num_columns,
+                {
+                    school_id_idx: school_id_value,
+                    grade_idx: 1,
+                },
+            )
+        )
+    else:
+        header_start = cfg["header_start"]
+        header_rows = cfg["header_rows"]
+        data_start = cfg["data_start"]
+        append_empty_rows(header_start)
+        sheet.append(
+            _row_with_values(num_columns, {school_id_idx: cfg["school_id_col"]})
+        )
+        sheet.append(
+            _row_with_values(
+                num_columns,
+                {
+                    grade_idx: grade_label,
+                },
+            )
+        )
+        blanks_before_data = data_start - header_start - header_rows
+        append_empty_rows(max(0, blanks_before_data))
+        sheet.append(
+            _row_with_values(
+                num_columns,
+                {
+                    school_id_idx: school_id_value,
+                    grade_idx: 1,
+                },
+            )
+        )
+
+    file_path = directory / f"{cfg['year']}-dropouts.xlsx"
+    workbook.save(file_path)
+
+
+@pytest.fixture
+def sample_dropouts_dir(temp_dir):
+    """Create a minimal dropout workbook bundle for testing."""
+
+    dropouts_dir = temp_dir / "dropouts"
+    dropouts_dir.mkdir()
+
+    for cfg in dropouts_module.DROP_OUT_CONFIGS:
+        _create_dropout_workbook(dropouts_dir, cfg)
+
+    return dropouts_dir
+
+
 @pytest.fixture
 def test_env(
     temp_dir,
@@ -205,6 +307,7 @@ def test_env(
     sample_generic_yml,
     sample_fixes_yml,
     sample_hr_xlsx,
+    sample_dropouts_dir,
 ):
     """Set up test environment variables."""
     # Create enroll directory and move CSV there
@@ -221,5 +324,6 @@ def test_env(
     os.environ["GEO_FILE"] = str(sample_geo_csv)
     os.environ["PSGC_FILE"] = str(sample_psgc_xlsx)
     os.environ["HR_DIR"] = str(sample_hr_xlsx)
+    os.environ["DROPOUT_DIR"] = str(sample_dropouts_dir)
 
     yield temp_dir

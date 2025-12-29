@@ -73,6 +73,9 @@ def build():
             db=db, enrollment_df=data.enrollment, levels_df=data.levels
         )
         db = _load_enrollment_tables(db=db, enrollment_df=data.enrollment)
+        dropouts = pipeline.get_output_table(output, "dropouts")
+        if dropouts is not None:
+            db = _load_dropout_tables(db=db, dropouts_df=dropouts)
         db = _load_geography_tables(db=db, data=data, geo_table=geo)
         region_names = pipeline.get_output_table(output, "region_names")
         if region_names is not None:
@@ -208,6 +211,43 @@ def _load_teacher_tables(db: Database, teachers_df: pl.DataFrame) -> Database:
         columns="position",
         table="teacher_positions",
         fk_column="teacher_position_id",
+    )
+
+    return db
+
+
+def _load_dropout_tables(db: Database, dropouts_df: pl.DataFrame) -> Database:
+    """Persist dropout facts and wire foreign keys."""
+
+    if dropouts_df.height == 0:
+        return db
+
+    db = add_to(db=db, df=dropouts_df, table_name="dropouts")
+
+    bulk_update(
+        db=db,
+        tbl_name="dropouts",
+        target_col="grade",
+        dependency_tbl="school_grades",
+        fk_col="grade_id",
+    )
+
+    bulk_update(
+        db=db,
+        tbl_name="dropouts",
+        target_col="strand",
+        dependency_tbl="school_strands",
+        fk_col="strand_id",
+        source_col="strand",
+    )
+
+    bulk_update(
+        db=db,
+        tbl_name="dropouts",
+        target_col="school_year",
+        dependency_tbl="school_years",
+        fk_col="school_year_id",
+        source_col="school_year",
     )
 
     return db

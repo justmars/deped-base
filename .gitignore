@@ -9,6 +9,7 @@
 # this is unofficial
 data/enroll/enrollment_2025-2026.csv
 hr/
+dropout/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
