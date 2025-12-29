@@ -126,11 +126,65 @@ def split_grade_strand_sex(col_series: pl.Series) -> pl.DataFrame:
     )
 
 
+def normalize_num_students(expr: pl.Expr) -> pl.Expr:
+    """Normalize raw enrollment counts into clean integers.
+
+    The expression removes commas, trims whitespace, and converts digit-only
+    strings to `Int64`, returning `null` for invalid values.
+
+    Args:
+        expr (pl.Expr): Expression resolving to the raw count values.
+
+    Returns:
+        pl.Expr: Sanitized integer expression with `Int64` dtype.
+    """
+
+    return (
+        expr.cast(pl.Utf8)
+        .str.replace_all(",", "")
+        .str.strip_chars()
+        .map_elements(
+            lambda v: int(v) if v and v.isdigit() else None, return_dtype=pl.Int64
+        )
+    )
+
+
+def _log_invalid_num_student_rows(df: pl.DataFrame, context: str) -> None:
+    """Log rows where the normalized enrollment counts could not be parsed."""
+
+    invalid_rows = df.filter(
+        pl.col("__raw_num_students").is_not_null() & pl.col("num_students").is_null()
+    )
+    count = invalid_rows.height
+    if not count:
+        return
+
+    samples = (
+        invalid_rows.select("__raw_num_students")
+        .unique()
+        .limit(5)
+        .to_series()
+        .to_list()
+    )
+
+    rprint(
+        f"[yellow]Dropped {count} invalid num_students rows during {context}.[/yellow]"
+    )
+    rprint(f"[yellow]Sample values: {samples}[/yellow]")
+
+
 # -----------------------------------------
 # 3. Transform single file
 # -----------------------------------------
 def load_and_melt_file(path: Path) -> pl.DataFrame:
-    """Load a single CSV of enrollment counts and melt it to long format."""
+    """Load a CSV and return enrollment counts in long form.
+
+    Args:
+        path (Path): Path to the enrollment CSV file.
+
+    Returns:
+        pl.DataFrame: Melted data with parsed grade, strand, and sex columns.
+    """
     school_year = extract_school_year(path.name)
     rprint(f"[green]Processing file:[/green] {path.name}")
 
@@ -153,6 +207,15 @@ def load_and_melt_file(path: Path) -> pl.DataFrame:
         value_name="num_students",
     )
 
+    melted = melted.with_columns(pl.col("num_students").alias("__raw_num_students"))
+
+    # Normalize the number of students values before filtering
+    melted = melted.with_columns(
+        normalize_num_students(pl.col("__raw_num_students")).alias("num_students")
+    )
+
+    _log_invalid_num_student_rows(melted, school_year)
+
     # Drop empty / zero entries early
     melted = melted.filter(
         (pl.col("num_students").is_not_null()) & (pl.col("num_students") != 0)
@@ -173,7 +236,15 @@ def load_and_melt_file(path: Path) -> pl.DataFrame:
 def process_enrollment_folder(
     folder_path: Path, test_only: bool = False
 ) -> pl.DataFrame:
-    """Load all CSV files under a folder and output one unified long-form dataframe."""
+    """Process each enrollment CSV in a folder and return combined data.
+
+    Args:
+        folder_path (Path): Directory containing the enrollment CSV files.
+        test_only (bool): If True, only the most recent file is processed.
+
+    Returns:
+        pl.DataFrame: Concatenated, cleaned enrollment data for all years.
+    """
     folder = Path(folder_path)
     if not folder.exists():
         raise FileNotFoundError(f"Folder does not exist: {folder_path}")
@@ -232,14 +303,16 @@ def build_school_year_offered_levels(
     cleaned_meta: pl.DataFrame,
     enroll: pl.DataFrame,
 ) -> tuple[pl.DataFrame, pl.DataFrame]:
-    """
-    Creates a long-format dataframe containing offered levels (ES/JHS/SHS)
-    per school_id per school_year, based on metadata + enrollment years.
+    """Build offer-level dataframes from cleaned metadata and enrollments.
+
+    Args:
+        cleaned_meta (pl.DataFrame): Metadata that contains `offers_*` flags.
+        enroll (pl.DataFrame): Enrollment facts that drive school-year coverage.
 
     Returns:
-    - cleaned_meta_no_offers: cleaned_meta without offer flags
-    - school_year_offered_levels: long format dataframe:
-        school_id | school_year | level | offered
+        tuple[pl.DataFrame, pl.DataFrame]:
+            clean_meta (pl.DataFrame): Metadata without `offers_*` columns.
+            school_year_offered_levels (pl.DataFrame): Long-format level offers.
     """
 
     OFFER_COLS = ["offers_es", "offers_jhs", "offers_shs"]
@@ -274,14 +347,13 @@ def build_school_year_offered_levels(
 
 
 def make_school_year_offered_levels(df_long: pl.DataFrame) -> pl.DataFrame:
-    """
-    Build a long-format dataframe of offered levels per school_id per school_year.
+    """Derive an offer matrix per school-year from melted enrollment data.
 
-    Output columns:
-    - school_id
-    - school_year
-    - level (ES/JHS/SHS)
-    - offered (0/1)
+    Args:
+        df_long (pl.DataFrame): Long-form enrollment metadata including `offers_*`.
+
+    Returns:
+        pl.DataFrame: Rows with `school_id`, `school_year`, `level`, and `offered`.
     """
 
     # 1. Sort so we can identify latest metadata per school
@@ -321,11 +393,15 @@ def make_school_year_offered_levels(df_long: pl.DataFrame) -> pl.DataFrame:
 def unpack_enroll_data(
     enrolment_folder: Path, test_only: bool = False
 ) -> tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]:
-    """
-    Outputs:
-    - school_year_meta: school-year–level metadata (PSGC-agnostic)
-    - enroll: long enrollment facts
-    - school_year_offered_levels
+    """Assemble metadata, enroll facts, and offer levels from source files.
+
+    Args:
+        enrolment_folder (Path): Directory storing each yearly enrollment CSV.
+        test_only (bool): If True, only the most recent CSV is processed.
+
+    Returns:
+        tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]: School-year metadata,
+            enrollment facts, and school-year offered levels.
     """
     df_long = process_enrollment_folder(
         folder_path=enrolment_folder, test_only=test_only

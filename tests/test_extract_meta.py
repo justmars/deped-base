@@ -2,8 +2,10 @@ import polars as pl
 import pytest
 
 from src.foundation.extract_meta import (
+    _log_invalid_num_student_rows,
     extract_grade_sex_columns,
     extract_school_year,
+    normalize_num_students,
     split_grade_strand_sex,
     unpack_enroll_data,
 )
@@ -62,6 +64,35 @@ class TestMetaExtraction:
         assert result["grade"][2] == "g11"
         assert result["strand"][2] == "stem"
         assert result["sex"][2] == "male"
+
+    def test_normalize_num_students(self):
+        """Ensure enrollment counts are parsed into integers."""
+        df = pl.DataFrame(
+            {
+                "num_students": ["1,200", "  50 ", "abc", None, "0"],
+            }
+        )
+        normalized = df.with_columns(
+            normalize_num_students(pl.col("num_students")).alias("num_students")
+        )
+        assert normalized["num_students"].to_list() == [1200, 50, None, None, 0]
+        assert normalized["num_students"].dtype == pl.Int64
+
+    def test_log_invalid_num_student_rows(self, capsys):
+        """Ensure invalid rows produce a log entry with samples."""
+        df = pl.DataFrame(
+            {
+                "__raw_num_students": ["100", "not-numeric", ""],
+                "num_students": [100, None, None],
+            }
+        )
+        _log_invalid_num_student_rows(df, "test normalization")
+        captured = capsys.readouterr()
+        assert (
+            "Dropped 2 invalid num_students rows during test normalization."
+            in captured.out
+        )
+        assert "Sample values" in captured.out
 
     def test_unpack_enroll_data(self, test_env):
         """Test unpacking enrollment data from directory."""

@@ -13,13 +13,13 @@ dependencies = [
     "rich>=14.2",
     # data processing (polars primary, pandas for compatibility)
     "polars>=0.20.13",
-    # read excel files (calamine for polars, openpyxl fallback)
-    # "calamine>=0.2.8",
     "openpyxl>=3.1.5",
     # db setup
     "sqlite-utils>=3.39",
     # docs
     "zensical>=0.0.13",
+    "fastexcel>=0.18.0",
+    "xlsxwriter>=3.2.9",
 ]
 
 [dependency-groups]

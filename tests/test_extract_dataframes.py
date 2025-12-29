@@ -1,6 +1,6 @@
 import polars as pl
 
-from src.foundation.extract_dataframes import extract_dataframes
+from src.foundation.extract_dataframes import ExtractedFrames, extract_dataframes
 
 
 class TestDataFrameExtraction:
@@ -9,7 +9,12 @@ class TestDataFrameExtraction:
         from src.foundation.common import env
 
         # This should work with our test environment
-        psgc_df, enroll_df, geo_df, levels_df, addr_df = extract_dataframes()
+        frames: ExtractedFrames = extract_dataframes()
+        psgc_df = frames.psgc
+        enroll_df = frames.enrollment
+        geo_df = frames.geo
+        levels_df = frames.levels
+        addr_df = frames.address
 
         # Check that all dataframes are returned
         assert isinstance(psgc_df, pl.DataFrame)

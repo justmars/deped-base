@@ -1,12 +1,13 @@
 from pathlib import Path
 
 import click
+import polars as pl
 import yaml
 from rich import print as rprint
 from sqlite_utils import Database
 
 from .common import add_to, bulk_update, env, prep_table
-from .extract_dataframes import extract_dataframes
+from .extract_dataframes import ExtractedFrames, extract_dataframes
 from .extract_enrollment import set_enrollment_tables
 
 
@@ -44,28 +45,70 @@ def prep():
 @remake.command("build")
 def build():
     """Populates the target database file with contents from /data."""
-    # add main tables
+    target = _resolve_db_target()
+    geo = env.str("GEOS_TABLE")
+    rprint(f"Populating: {target=}; [red]main table[/red] {geo=}")
+
+    db = _open_wal_database(target)
+    try:
+        data = extract_dataframes()
+        db = _load_lookup_tables(
+            db=db, enrollment_df=data.enrollment, levels_df=data.levels
+        )
+        db = _load_enrollment_tables(db=db, enrollment_df=data.enrollment)
+        db = _load_geography_tables(db=db, data=data, geo_table=geo)
+    finally:
+        db.close()
+
+
+def _resolve_db_target() -> Path:
+    """Return the configured database file path, raising if missing.
+
+    Returns:
+        Path: Path to the DB file defined in the env.
+    """
+
     target = env.path("DB_FILE")
     if not target.exists():
         raise FileNotFoundError(f"Target database file {target=} does not exist.")
+    return target
 
-    geo = env.str("GEOS_TABLE")
-    rprint(f"Populating: {target=}; [red]main table[/red] {geo=}")
+
+def _open_wal_database(target: Path) -> Database:
+    """Open the target SQLite database with WAL enabled.
+
+    Args:
+        target (Path): Path to the existing SQLite file.
+
+    Returns:
+        Database: `sqlite_utils.Database` opened with WAL mode.
+    """
+
     db = Database(target, use_counts_table=True)
     db.enable_wal()
+    return db
 
-    # extract data sources
-    psgc_df, enroll_df, geo_df, levels_df, addr_df = extract_dataframes()
 
-    # the school years table will be created based on the enroll dataframe
+def _load_lookup_tables(
+    db: Database, enrollment_df: pl.DataFrame, levels_df: pl.DataFrame
+) -> Database:
+    """Load the school year and level lookup tables.
+
+    Args:
+        db (Database): Open SQLite database connection.
+        enrollment_df (pl.DataFrame): Full enrollment facts.
+        levels_df (pl.DataFrame): Derived level metadata.
+
+    Returns:
+        Database: Updated database after inserting lookup data.
+    """
     db = add_to(
         db=db,
-        df=enroll_df[["school_year"]].unique().drop_nulls(subset=["school_year"]),
+        df=enrollment_df[["school_year"]].unique().drop_nulls(subset=["school_year"]),
         table_name="school_years",
     )
     db = add_to(db=db, df=levels_df, table_name="school_levels")
 
-    # the levels table contains school year, this can be replaced
     bulk_update(
         db=db,
         tbl_name="school_levels",
@@ -74,10 +117,21 @@ def build():
         fk_col="school_year_id",
         source_col="school_year",
     )
+    return db
 
-    db = add_to(db=db, df=enroll_df, table_name="enroll")
 
-    # the enroll table just added contains school year, this can also be replaced
+def _load_enrollment_tables(db: Database, enrollment_df: pl.DataFrame) -> Database:
+    """Insert enrollment facts and resolve year foreign keys.
+
+    Args:
+        db (Database): Open SQLite database connection.
+        enrollment_df (pl.DataFrame): Enrollment fact frame.
+
+    Returns:
+        Database: Database after inserting enrollment data.
+    """
+    db = add_to(db=db, df=enrollment_df, table_name="enroll")
+
     bulk_update(
         db=db,
         tbl_name="enroll",
@@ -87,24 +141,40 @@ def build():
         source_col="school_year",
     )
 
-    # create foreign key references for strand and grades
-    db = set_enrollment_tables(db=db, df=enroll_df, src_table="enroll")
+    return set_enrollment_tables(db=db, df=enrollment_df, src_table="enroll")
 
-    # add the geo dataframe as the base table
-    db = add_to(db=db, df=geo_df, table_name=geo)
 
-    # add the address dataframe as the address table
-    db = add_to(db=db, df=addr_df, table_name="addr")
+def _load_geography_tables(
+    db: Database, data: ExtractedFrames, geo_table: str
+) -> Database:
+    """Persist geography, address, and PSGC tables.
 
-    # create the psgc table
-    db = add_to(db=db, df=psgc_df, table_name="psgc")
+    Args:
+        db (Database): Open SQLite database connection.
+        data (ExtractedFrames): Named frames from extraction.
+        geo_table (str): Name of the `geos` table.
 
-    # add foreign keys from the base table to psgc
+    Returns:
+        Database: Database after geography tables are stored.
+    """
+    db = add_to(db=db, df=data.geo, table_name=geo_table)
+    db = add_to(db=db, df=data.address, table_name="addr")
+    db = add_to(db=db, df=data.psgc, table_name="psgc")
+
+    _attach_psgc_foreign_keys(db=db, geo_table=geo_table)
+    return db
+
+
+def _attach_psgc_foreign_keys(db: Database, geo_table: str) -> None:
+    """Add PSGC foreign key constraints for the geography table.
+
+    Args:
+        db (Database): Open connection.
+        geo_table (str): Name of the geography fact table.
+    """
     cols = ["psgc_region_id", "psgc_provhuc_id", "psgc_muni_id", "psgc_brgy_id"]
     for col in cols:
-        db[geo].add_foreign_key(col, "psgc", "id")  # type: ignore
-
-    db.close()
+        db[geo_table].add_foreign_key(col, "psgc", "id")  # type: ignore
 
 
 if __name__ == "__main__":

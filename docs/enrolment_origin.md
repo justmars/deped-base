@@ -44,3 +44,9 @@ This introduces a parsing challenge, because the enrollment pipeline previously 
 If split naïvely on _, these become 4 tokens: `["G12", "sshs", "acad", "Male"]`
 
 This breaks earlier parsing logic, which expected only 2 parts (Grade_Sex) or 3 parts (Grade_Strand_Sex).
+
+## Count Normalization
+
+The wide enrollment columns occasionally include formatting such as comma separators, stray whitespace, or even empty/invalid strings. The pipeline now sanitizes each `num_students` value by removing commas/trim spaces and casting digit-only strings to integers before filtering (`normalize_num_students`), so every stored count is a clean `Int64` and malformed cells become `NULL`. This guarantees numeric comparisons (e.g., dropping zeros) never see string types, keeping the fact table deterministic.
+
+Invalid rows are logged per file with their count and a small sample, so auditors can review rejected entries without rerunning the transformation manually.

@@ -82,6 +82,7 @@ Processed enrollment files.
 
 - Primary table for analytics and reporting.
 - All participation and trend metrics are derived here.
+- `num_students` is sanitized by removing formatting (commas/whitespace) and casting to `Int64`, so invalid or empty counts become `NULL` before load.
 
 ## 4. Enrollment Dimension Tables
 
