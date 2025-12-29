@@ -50,7 +50,9 @@ def set_psgc(f: Path) -> pd.DataFrame:
     ]
 
     df.replace({"-": np.nan}, inplace=True)
-    df["income_class"] = df["income_class"].str.replace("*", "", regex=False)
+    df["income_class"] = (
+        df["income_class"].fillna("").astype(str).str.replace("*", "", regex=False)
+    )
     # safe fill for city_class
     df["city_class"] = df["city_class"].fillna("").astype(str)
 
