@@ -47,6 +47,6 @@ This breaks earlier parsing logic, which expected only 2 parts (Grade_Sex) or 3 
 
 ## Count Normalization
 
-The wide enrollment columns occasionally include formatting such as comma separators, stray whitespace, or even empty/invalid strings. The pipeline now sanitizes each `num_students` value by removing commas/trim spaces and casting digit-only strings to integers before filtering (`normalize_num_students`), so every stored count is a clean `Int64` and malformed cells become `NULL`. This guarantees numeric comparisons (e.g., dropping zeros) never see string types, keeping the fact table deterministic.
+The wide enrollment columns occasionally include formatting such as comma separators, stray whitespace, or even empty/invalid strings. The pipeline now sanitizes each `num_students` value by removing commas/trim spaces and casting digit-only strings to integers before filtering (`sanitize_num_students`), so every stored count is a clean `Int64` and malformed cells become `NULL`. This guarantees numeric comparisons (e.g., dropping zeros) never see string types, keeping the fact table deterministic.
 
 Invalid rows are logged per file with their count and a small sample, so auditors can review rejected entries without rerunning the transformation manually.

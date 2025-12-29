@@ -18,6 +18,10 @@ The resulting database is a time-aware, PSGC-anchored education data warehouse t
 - `src/foundation/transforms/`: shared cleanup utilities (location fixes, school-name normalization, reorder helpers) isolated for reuse.
 - `src/foundation/loaders/`: loader helpers (currently the enrollment table wiring) keep database writes separate from extraction concerns.
 
+## Extraction rules
+
+Detailed notes about the extraction behavior live in `docs/extraction_rules.md`, covering PSGC name normalization, enrollment melting/`num_students` cleanup, logging of invalid rows, and the dependent matching flow. Keep this file in sync whenever the pipeline adds or refactors a rule.
+
 ## Development
 
 ```sh

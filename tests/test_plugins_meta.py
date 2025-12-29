@@ -2,7 +2,7 @@ from pathlib import Path
 
 import polars as pl
 
-from src.foundation.plugins.meta import load_and_melt_file
+from src.foundation.plugins.meta import melt_enrollment_csv
 
 
 def _write_sample_enrollment(path: Path):
@@ -30,11 +30,11 @@ def _write_sample_enrollment(path: Path):
     df.write_csv(path)
 
 
-def test_load_and_melt_file_logs_invalid(tmp_path, capsys):
+def test_melt_enrollment_csv_logs_invalid(tmp_path, capsys):
     path = tmp_path / "enrollment_2025-2026.csv"
     _write_sample_enrollment(path)
 
-    df = load_and_melt_file(path)
+    df = melt_enrollment_csv(path)
 
     assert df["num_students"].dtype == pl.Int64
     assert df.height > 0

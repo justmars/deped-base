@@ -3,9 +3,9 @@
 from .meta import (
     extract_grade_sex_columns,
     extract_school_year,
-    load_and_melt_file,
-    normalize_num_students,
+    melt_enrollment_csv,
     process_enrollment_folder,
+    sanitize_num_students,
     split_grade_strand_sex,
     unpack_enroll_data,
 )

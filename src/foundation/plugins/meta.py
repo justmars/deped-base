@@ -126,7 +126,7 @@ def split_grade_strand_sex(col_series: pl.Series) -> pl.DataFrame:
     )
 
 
-def normalize_num_students(expr: pl.Expr) -> pl.Expr:
+def sanitize_num_students(expr: pl.Expr) -> pl.Expr:
     """Normalize raw enrollment counts into clean integers.
 
     The expression removes commas, trims whitespace, and converts digit-only
@@ -149,7 +149,7 @@ def normalize_num_students(expr: pl.Expr) -> pl.Expr:
     )
 
 
-def _log_invalid_num_student_rows(df: pl.DataFrame, context: str) -> None:
+def _log_invalid_num_student_values(df: pl.DataFrame, context: str) -> None:
     """Log rows where the normalized enrollment counts could not be parsed."""
 
     invalid_rows = df.filter(
@@ -176,7 +176,7 @@ def _log_invalid_num_student_rows(df: pl.DataFrame, context: str) -> None:
 # -----------------------------------------
 # 3. Transform single file
 # -----------------------------------------
-def load_and_melt_file(path: Path) -> pl.DataFrame:
+def melt_enrollment_csv(path: Path) -> pl.DataFrame:
     """Load a CSV and return enrollment counts in long form.
 
     Args:
@@ -211,10 +211,10 @@ def load_and_melt_file(path: Path) -> pl.DataFrame:
 
     # Normalize the number of students values before filtering
     melted = melted.with_columns(
-        normalize_num_students(pl.col("__raw_num_students")).alias("num_students")
+        sanitize_num_students(pl.col("__raw_num_students")).alias("num_students")
     )
 
-    _log_invalid_num_student_rows(melted, school_year)
+    _log_invalid_num_student_values(melted, school_year)
 
     # Drop empty / zero entries early
     melted = melted.filter(
@@ -257,7 +257,7 @@ def process_enrollment_folder(
     if not files:
         raise ValueError("No CSV files found in folder.")
 
-    all_dfs = [load_and_melt_file(path) for path in files]
+    all_dfs = [melt_enrollment_csv(path) for path in files]
 
     rprint("[blue]Combining all dataframes...[/blue]")
     df_long = pl.concat(all_dfs, how="diagonal")
