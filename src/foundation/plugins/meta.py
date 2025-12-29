@@ -2,7 +2,8 @@ import re
 from pathlib import Path
 
 import polars as pl
-from rich import print as rprint
+
+from foundation.common import console
 
 from ..plugin import BaseExtractor, ExtractionContext, ExtractionResult
 from ..transforms.location import clean_meta_location_names
@@ -168,10 +169,10 @@ def _log_invalid_num_student_values(df: pl.DataFrame, context: str) -> None:
         .to_list()
     )
 
-    rprint(
-        f"[yellow]Dropped {count} invalid num_students rows during {context}.[/yellow]"
-    )
-    rprint(f"[yellow]Sample values: {samples}[/yellow]")
+    message = f"Dropped {count} invalid num_students rows during {context}."
+    console.log(f"[yellow]{message}[/yellow]")
+    print(message)
+    console.log(f"[yellow]Sample values: {samples}[/yellow]")
 
 
 # -----------------------------------------
@@ -187,7 +188,7 @@ def melt_enrollment_csv(path: Path) -> pl.DataFrame:
         pl.DataFrame: Melted data with parsed grade, strand, and sex columns.
     """
     school_year = extract_school_year(path.name)
-    rprint(f"[green]Processing file:[/green] {path.name}")
+    console.log(f"[green]Processing file:[/green] {path.name}")
 
     df = pl.read_csv(path)
 
@@ -200,7 +201,7 @@ def melt_enrollment_csv(path: Path) -> pl.DataFrame:
     # Enrollment columns
     value_cols = extract_grade_sex_columns(df, id_vars=id_vars)
 
-    rprint("[cyan]Melting wide enrollment columns → long...[/cyan]")
+    console.log("[cyan]Melting wide enrollment columns → long...[/cyan]")
     melted = df.unpivot(
         index=id_vars,
         on=value_cols,
@@ -258,9 +259,30 @@ def process_enrollment_folder(
     if not files:
         raise ValueError("No CSV files found in folder.")
 
-    all_dfs = [melt_enrollment_csv(path) for path in files]
+    schema: dict[str, pl.DataType] | None = None
+    all_dfs: list[pl.DataFrame] = []
 
-    rprint("[blue]Combining all dataframes...[/blue]")
+    def _coerce(
+        df: pl.DataFrame, target_schema: dict[str, pl.DataType]
+    ) -> pl.DataFrame:
+        exprs = []
+        for col, dtype in target_schema.items():
+            if col in df.columns:
+                exprs.append(pl.col(col).cast(dtype).alias(col))
+            else:
+                exprs.append(pl.lit(None).cast(dtype).alias(col))
+        return df.with_columns(exprs)
+
+    for path in files:
+        df = melt_enrollment_csv(path)
+        if schema is None:
+            schema = df.schema
+            base_df = df
+        else:
+            df = _coerce(df, schema)
+        all_dfs.append(df if schema is not None else base_df)
+
+    console.log("[blue]Combining all dataframes...[/blue]")
     df_long = pl.concat(all_dfs, how="diagonal")
 
     for col in COLS_TO_CLEAN:
@@ -408,7 +430,7 @@ def unpack_enroll_data(
         folder_path=enrolment_folder, test_only=test_only
     )
 
-    rprint("[blue]Extracting school-year offered levels...[/blue]")
+    console.log("[blue]Extracting school-year offered levels...[/blue]")
     school_year_offered_levels = make_school_year_offered_levels(df_long)
 
     # -----------------------------
@@ -431,13 +453,13 @@ def unpack_enroll_data(
         "school_district",
     ]
 
-    rprint("[blue]Extracting school-year metadata...[/blue]")
+    console.log("[blue]Extracting school-year metadata...[/blue]")
     school_year_meta = df_long.select(REVISED_COLS).unique(
         subset=["school_id", "school_year"]
     )
 
     # Clean location + school names *once*
-    rprint("[blue]Cleaning school-year metadata...[/blue]")
+    console.log("[blue]Cleaning school-year metadata...[/blue]")
     school_year_meta = clean_meta_location_names(school_year_meta)
     school_year_meta = school_year_meta.with_columns(
         pl.col("school_name").map_elements(clean_school_name, return_dtype=pl.Utf8)
@@ -446,7 +468,7 @@ def unpack_enroll_data(
     # -----------------------------
     # Enrollment facts (thin)
     # -----------------------------
-    rprint("[blue]Extracting enrollment facts...[/blue]")
+    console.log("[blue]Extracting enrollment facts...[/blue]")
     enroll = df_long.select(
         [
             "school_year",

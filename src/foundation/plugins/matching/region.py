@@ -1,7 +1,6 @@
 import polars as pl
-from rich import print as rprint
 
-from ...common import PSGC_REGION_MAP, normalize_region_name
+from foundation.common import PSGC_REGION_MAP, console, normalize_region_name
 
 
 def map_psgc_region(region_name: str, psgc_map: dict) -> str | None:
@@ -18,7 +17,7 @@ def attach_psgc_region_codes(meta: pl.DataFrame, psgc: pl.DataFrame) -> pl.DataF
     Only PSGC entries where geo == 'Reg' are allowed as region matches.
     """
 
-    rprint("[cyan]Attaching PSGC region codes...[/cyan]")
+    console.log("[cyan]Attaching PSGC region codes...[/cyan]")
 
     # ---------------------------------------------------------
     # 1. Filter PSGC to REGION rows only

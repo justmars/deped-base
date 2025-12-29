@@ -12,6 +12,6 @@ class TestRegionNamesPlugin:
         df: pl.DataFrame = output.tables["region_names"]
 
         assert df.height > 0
-        assert set(df["psgc_region_id"].to_list()) >= {"01", "13"}
+        assert set(df["psgc_region_id"].to_list()) >= {"0100000000", "1300000000"}
         assert "location" in df.columns
         assert "common" in df.columns

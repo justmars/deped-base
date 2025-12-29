@@ -1,7 +1,6 @@
 import polars as pl
-from rich import print as rprint
 
-from ...common import FIXES, convert_trailing_roman, normalize_geo_name
+from foundation.common import FIXES, console, convert_trailing_roman, normalize_geo_name
 
 
 def fix_barangay_enye_value(barangay):
@@ -78,7 +77,7 @@ def attach_psgc_brgy_id(meta: pl.DataFrame, psgc: pl.DataFrame) -> pl.DataFrame:
     """
     if "psgc_muni_id" not in meta.columns:
         raise Exception("Missing dependency.")
-    rprint("[cyan]Attaching PSGC barangay codes...[/cyan]")
+    console.log("[cyan]Attaching PSGC barangay codes...[/cyan]")
 
     df = meta.clone()
 

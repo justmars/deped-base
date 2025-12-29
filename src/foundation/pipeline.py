@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import polars as pl
-from rich import print as rprint
+from environs import EnvError
+from rich.console import Console
 
 from .common import env
-from .plugin import BaseExtractor, ExtractionContext, ExtractionResult, SourcePaths
+from .plugin import BaseExtractor, ExtractionContext, SourcePaths
 from .registry import PluginRegistry
 from .schema import SCHEMAS
 
@@ -41,6 +43,7 @@ class PluginPipeline:
     """Discover, sort, and execute extractor plugins."""
 
     def __init__(self, registry: PluginRegistry | None = None):
+        self.console = Console()
         self.registry = registry or PluginRegistry()
         self.paths = self._resolve_source_paths()
         self.context = ExtractionContext(paths=self.paths)
@@ -51,16 +54,27 @@ class PluginPipeline:
         enroll_dir = env.path("ENROLL_DIR")
         psgc_file = env.path("PSGC_FILE")
         geo_file = env.path("GEO_FILE")
+        default_region_file = (
+            Path(__file__).resolve().parents[1].parent / "data" / "regions.yml"
+        )
+        try:
+            region_names_file = env.path("REGION_NAMES_FILE")
+        except EnvError:
+            region_names_file = default_region_file
 
         for label, path in (
             ("enroll_dir", enroll_dir),
             ("psgc_file", psgc_file),
             ("geo_file", geo_file),
+            ("region_names_file", region_names_file),
         ):
-            rprint(f"Detected: {label}={path}")
+            self.console.log(f"[bold slate_blue1]{label}[/bold slate_blue1]={path}")
 
         return SourcePaths(
-            enroll_dir=enroll_dir, psgc_file=psgc_file, geo_file=geo_file
+            enroll_dir=enroll_dir,
+            psgc_file=psgc_file,
+            geo_file=geo_file,
+            region_names_file=region_names_file,
         )
 
     def _load_plugins(self) -> dict[str, BaseExtractor]:
@@ -120,24 +134,31 @@ class PluginPipeline:
         metrics: dict[str, object] = {}
 
         for plugin in self.execution_order:
-            inputs: dict[str, pl.DataFrame] = {}
-            missing: list[str] = []
-            for dependency in plugin.depends_on:
-                table = collected.get(dependency)
-                if table is None:
-                    missing.append(dependency)
-                else:
-                    inputs[dependency] = table
-            if missing:
-                raise PipelineExecutionError(
-                    f"{plugin.name} cannot resolve inputs: {missing}"
-                )
+            with self.console.status(
+                f"[bold green]Extracting[/bold green] [cyan]{plugin.name}[/cyan]: ",
+                spinner="dots",
+            ):
+                inputs: dict[str, pl.DataFrame] = {}
+                missing: list[str] = []
+                for dependency in plugin.depends_on:
+                    table = collected.get(dependency)
+                    if table is None:
+                        missing.append(dependency)
+                    else:
+                        inputs[dependency] = table
+                if missing:
+                    raise PipelineExecutionError(
+                        f"{plugin.name} cannot resolve inputs: {missing}"
+                    )
 
-            result = plugin.extract(context=self.context, dependencies=inputs)
-            for table_name, table in result.tables.items():
-                self._validate_table_contract(table_name=table_name, table=table)
-                collected[table_name] = table
-            metrics.update(result.metrics)
+                result = plugin.extract(context=self.context, dependencies=inputs)
+                for table_name, table in result.tables.items():
+                    self._validate_table_contract(table_name=table_name, table=table)
+                    collected[table_name] = table
+                metrics.update(result.metrics)
+                self.console.log(
+                    f"[green]✓ Completed[/green] extractor [cyan]{plugin.name}[/cyan]"
+                )
 
         return PipelineOutput(tables=collected, metrics=metrics)
 
@@ -148,7 +169,7 @@ class PluginPipeline:
 
         errors = schema.validate(table)
         if not errors:
-            rprint(f"[green]Validated schema[/green] {table_name}")
+            self.console.log(f"[green]Validated schema[/green] {table_name}")
             return
 
         sample = table.head(3).to_dicts()
@@ -156,6 +177,11 @@ class PluginPipeline:
             f"Schema validation failed for {table_name}: "
             f"{'; '.join(errors)}; sample={sample}"
         )
+
+    def get_output_table(self, output: PipelineOutput, key: str) -> pl.DataFrame | None:
+        """Return a specific table emitted by the pipeline (if present)."""
+
+        return output.tables.get(key)
 
 
 def frames_from_pipeline_output(output: PipelineOutput) -> ExtractedFrames:

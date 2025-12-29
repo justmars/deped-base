@@ -37,7 +37,7 @@ def get_unique_provinces(df: pl.DataFrame, psgc_df: pl.DataFrame) -> pl.DataFram
         .cast(pl.Utf8)
         .map_elements(_digits_only, return_dtype=pl.Utf8)
     )
-    prov_series = prov_series.filter(prov_series.str.lengths() > 0).unique()
+    prov_series = prov_series.filter(prov_series.str.len_chars() > 0).unique()
     prov_df = pl.DataFrame({"raw_provhuc_id": prov_series})
 
     # Canonical 5-digit province code

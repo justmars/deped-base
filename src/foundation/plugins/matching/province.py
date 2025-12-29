@@ -1,7 +1,6 @@
 import polars as pl
-from rich import print as rprint
 
-from ...common import normalize_geo_name
+from foundation.common import console, normalize_geo_name
 
 
 def prepare_psgc(psgc: pl.DataFrame) -> pl.DataFrame:
@@ -221,7 +220,7 @@ def attach_psgc_provhuc_codes(meta: pl.DataFrame, psgc: pl.DataFrame) -> pl.Data
     """
     if "psgc_region_id" not in meta.columns:
         raise Exception("Missing dependency.")
-    rprint("[cyan]Attaching PSGC provincial / HUC / SubMun codes...[/cyan]")
+    console.log("[cyan]Attaching PSGC provincial / HUC / SubMun codes...[/cyan]")
 
     # -------------------------------------------
     # Step 1 — Normalize meta

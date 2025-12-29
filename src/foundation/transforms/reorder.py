@@ -1,5 +1,6 @@
 import polars as pl
-from rich import print as rprint
+
+from foundation.common import console
 
 
 def reorganize_school_geo_df(df: pl.DataFrame) -> pl.DataFrame:
@@ -16,7 +17,7 @@ def reorganize_school_geo_df(df: pl.DataFrame) -> pl.DataFrame:
 
     Ensures all PSGC ID fields are strings.
     """
-    rprint("[cyan]Reordering dataframe columns...[/cyan]")
+    console.log("[cyan]Reordering dataframe columns...[/cyan]")
 
     # --- ensure PSGC fields are strings ---
     psgc_cols = ["psgc_region_id", "psgc_provhuc_id", "psgc_muni_id", "psgc_brgy_id"]

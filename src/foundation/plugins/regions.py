@@ -26,8 +26,7 @@ class RegionNamesExtractor(BaseExtractor):
         context: ExtractionContext,
         dependencies: dict[str, pl.DataFrame],
     ) -> ExtractionResult:
-        del context, dependencies
-        regions_file = Path(__file__).resolve().parents[3] / "data" / "regions.yml"
+        regions_file = context.paths.region_names_file
         entries = _load_region_aliases(regions_file)
         if not entries:
             raise ValueError("No region aliases found in regions.yml")

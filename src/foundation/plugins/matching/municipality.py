@@ -2,9 +2,8 @@ import re
 from collections.abc import Iterable
 
 import polars as pl
-from rich import print as rprint
 
-from ...common import normalize_geo_name
+from foundation.common import console, normalize_geo_name
 
 
 def _allowed_prefixes_from_provhuc(provhuc_value) -> set[str]:
@@ -98,7 +97,7 @@ def attach_psgc_muni_id(meta: pl.DataFrame, psgc: pl.DataFrame) -> pl.DataFrame:
     """
     if "psgc_provhuc_id" not in meta.columns:
         raise Exception("Missing dependency.")
-    rprint("[cyan]Attaching PSGC municipality codes...[/cyan]")
+    console.log("[cyan]Attaching PSGC municipality codes...[/cyan]")
 
     # Normalize meta municipality for matching
     meta = meta.with_columns(

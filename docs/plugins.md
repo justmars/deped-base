@@ -24,12 +24,12 @@ Any new extractor that follows this contract plugs into `cli build` automaticall
 
 1. Add a schema entry for each new logical table in `src/foundation/schema.py` so contracts remain centralized.
 2. Create a plugin module under `src/foundation/plugins/` with a `BaseExtractor` subclass (`name`, `outputs`, `depends_on`), reusing shared transforms when possible.
-3. Have the extractor run only its extract-transform logic and return `ExtractionResult(tables={...})`. Avoid writing to SQLite directly; let `cli build` consume the tables post-validation.
+3. Have the extractor run only its extract-transform logic and return `ExtractionResult(tables={...})`. Avoid writing to SQLite directly; let `cli build` consume the tables post-validation. Use `PluginPipeline.get_output_table(output, "<name>")` to decide when to persist optional tables such as `region_names`.
 4. Extend regression coverage by adding targeted tests (`tests/test_plugins_<name>.py`) and rerun the suite (`python -m pytest tests/test_extract_dataframes.py tests/test_cli.py`).
 
 ### Example: Teacher headcount plugin
 
-The existing HR helpers already demonstrate how to normalize companion datasets per school year:
+This sample code for HR demonstrates how to normalize companion datasets per school year:
 
 ```python
 from pathlib import Path
@@ -101,7 +101,30 @@ Once the schema is defined, your `TeachersExtractor` is auto-discovered by `Plug
 - `/data/regions.yml` now holds the canonical region alias catalog that `RegionNamesExtractor` loads after the PSGC table exists.
 - Keep these files in the repository so the pipeline and tests can reuse them, and update the YAML whenever new aliases or reference values are needed.
 
+## Hooking up new plugins
+
+Whenever you add a plugin with its own source file, extend the “standard operating process”:
+
+1. **Document the env var**: add a descriptive entry to `env.example` (and `.env` as needed) that names the file and points at the default location. Example:
+
+   ```sh
+   # Region aliases (RegionNamesExtractor)
+   REGION_NAMES_FILE="data/regions.yml"
+   ```
+
+2. **Use the env var in the extractor**: read the path via `env.path("<VAR_NAME>", default=Path(...))` or expose it through `SourcePaths` so the plugin uses the configured location rather than hard-coded paths.
+3. **Update the plugin doc** (`docs/plugins/<name>.md`): add a “Source” section detailing the env var, expected file format, and any defaults so users know what to edit before running `cli build`.
+4. **Add a regression test** that exercises the extractor with the standard env fixture to ensure the new file is loaded correctly.
+
+Following those steps keeps every extractor’s inputs discoverable, configurable, and documented alongside the plugin itself.
+
 ## Related reference documents
 
 - [`docs/enrolment_origin.md`](./enrolment_origin.md) explains the wide-format enrollment CSVs that feed the enrollment extractor.
 - [`docs/brgy_names.md`](./brgy_names.md) shows how missing barangay matches surface during PSGC matching and how the metadata can be interrogated for corrections.
+## Directory roles
+
+- `src/foundation/loaders/` contain helpers that write Polars frames to SQLite and enforce FK wiring. They stay separate from extractors to keep IO concerns isolated.
+- `src/foundation/transforms/` contain reusable cleanup utilities (school-name normalization, location fixes, order helpers) that can be shared by multiple plugins without duplicating logic.
+
+Example: `RegionNamesExtractor` lives under `plugins/`, but when the matching plugins need the normalized name logic they import `foundation.transforms.location.clean_meta_location_names` instead of reimplementing it. Meanwhile `set_enrollment_tables` lives in `loaders/` because it only touches the database and is reused after every plugin run rather than during extraction.

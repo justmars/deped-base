@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable, Sequence
+from typing import Iterable, Sequence, Type, Union
 
 import polars as pl
 
@@ -9,7 +9,7 @@ import polars as pl
 @dataclass(frozen=True)
 class ColumnDef:
     name: str
-    dtype: pl.DataType
+    dtype: Union[Type[pl.DataType], pl.DataType]
     nullable: bool = True
     description: str = ""
 

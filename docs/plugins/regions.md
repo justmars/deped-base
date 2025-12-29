@@ -8,8 +8,8 @@ Load the curated region alias sheet so every canonical PSGC region ID is linked 
 - Keys: `psgc_region_id`, `roman`, `location`, `common`, and optional `other` aliases (use the full 10-digit PSGC region code so the field can act as a foreign key).
 ## Source
 
-- File: `data/regions.yml`
-- Keys: `psgc_region_id`, `roman`, `location`, `common`, and optional `other` aliases (use the full 10-digit PSGC region code so the field can act as a foreign key).
+- Default file: `data/regions.yml`.
+- Override via `REGION_NAMES_FILE` environment variable to point to another YAML file with `psgc_region_id`, `roman`, `location`, `common`, and optional `other` aliases (use the full 10-digit PSGC region code so the field can act as a foreign key).
 - File: `data/regions.yml`
 - Keys: `psgc_region_id`, `roman`, `location`, `common`, and optional `other` aliases.
 
@@ -26,6 +26,5 @@ Load the curated region alias sheet so every canonical PSGC region ID is linked 
 
 See `src/foundation/schema.py` (`REGION_NAMES_SCHEMA`). The table enforces `psgc_region_id` and `location` (both non-null) and optionally keeps roman/common/other aliases.
 
-## Related docs
-
 - `docs/plugins.md` and `docs/plugins/address.md` explain how these aliases help the matching pipeline stay resilient when the enrollment data uses shorthand region labels.
+- Use `PluginPipeline.get_output_table` when you want to persist this optional table (see `cli build` for an example).

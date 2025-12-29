@@ -3,12 +3,19 @@ from pathlib import Path
 import click
 import polars as pl
 import yaml
-from rich import print as rprint
+from rich.console import Console
 from sqlite_utils import Database
 
 from .common import add_to, bulk_update, env, prep_table
 from .loaders.enrollment import set_enrollment_tables
-from .pipeline import ExtractedFrames, PluginPipeline, frames_from_pipeline_output
+from .pipeline import (
+    ExtractedFrames,
+    PipelineOutput,
+    PluginPipeline,
+    frames_from_pipeline_output,
+)
+
+console = Console()
 
 
 @click.group()
@@ -26,19 +33,24 @@ def prep():
 
     # database will be created (or remade, if already existing) here
     target = env.path("DB_FILE")
-    rprint(f"Using: {src=}; [red]rebuilding[/red] {target=}")
     db = Database(target, recreate=True, use_counts_table=True)
     db.enable_wal()
 
-    rprint(f"Processing {src=} for target db.")
-    generic = Path(src)
-    text = generic.read_text()
-    data = yaml.safe_load(text)
+    with console.status(
+        f"[bold magenta]Preparing database[/bold magenta] {target.name}\n",
+        spinner="dots",
+    ):
+        console.log(
+            f"[bold]Using generic file:[/bold] {src}; [red]rebuilding[/red] {target}"
+        )
+        generic = Path(src)
+        text = generic.read_text()
+        data = yaml.safe_load(text)
 
-    prep_table(db=db, table_name="school_sizes", values=data["school_sizes"])
-    prep_table(db=db, table_name="school_grades", values=data["school_grades"])
-    prep_table(db=db, table_name="school_epochs", values=data["school_epochs"])
-
+        prep_table(db=db, table_name="school_sizes", values=data["school_sizes"])
+        prep_table(db=db, table_name="school_grades", values=data["school_grades"])
+        prep_table(db=db, table_name="school_epochs", values=data["school_epochs"])
+        console.log(f"[green]✓ Built reference tables from {generic.name}[/green]")
     db.close()
 
 
@@ -47,14 +59,14 @@ def build():
     """Populates the target database file with contents from /data."""
     target = _resolve_db_target()
     geo = env.str("GEOS_TABLE")
-    rprint(f"Populating: {target=}; [red]main table[/red] {geo=}")
+    console.log(f"[blue]Populating[/blue]: {target}; [red]main table[/red] {geo}")
 
     db = _open_wal_database(target)
     try:
         pipeline = PluginPipeline()
-        rprint("[blue]Discovered extractors:[/blue]", len(pipeline.plugins))
+        console.log(f"[blue]Discovered extractors:[/blue] {len(pipeline.plugins)}")
         order = ", ".join(plugin.name for plugin in pipeline.execution_order)
-        rprint("[blue]Execution order:[/blue]", order)
+        console.log(f"[blue]Execution order:[/blue] {order}")
         output = pipeline.execute()
         data = frames_from_pipeline_output(output)
         db = _load_lookup_tables(
@@ -62,6 +74,9 @@ def build():
         )
         db = _load_enrollment_tables(db=db, enrollment_df=data.enrollment)
         db = _load_geography_tables(db=db, data=data, geo_table=geo)
+        region_names = pipeline.get_output_table(output, "region_names")
+        if region_names is not None:
+            db = add_to(db=db, df=region_names, table_name="region_names")
     finally:
         db.close()
 

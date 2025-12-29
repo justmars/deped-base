@@ -4,89 +4,106 @@ region_names:
     roman: I
     location: Ilocos Region
     common: "1"
+    num: "R1"
 
   - psgc_region_id: "0200000000"
     roman: II
     location: Cagayan Valley
     common: "2"
+    num: "R2"
 
   - psgc_region_id: "0300000000"
     roman: III
     location: Central Luzon
     common: "3"
+    num: "R3"
 
   - psgc_region_id: "0400000000"
     roman: IV-A
     location: Cavite, Laguna, Batangas, Rizal, and Quezon
-    common: "4A"
-    other: CALABARZON
+    common: "CALABARZON"
+    num: "R4A"
 
   - psgc_region_id: "0500000000"
     roman: V
     location: Bicol Region
     common: "5"
+    num: "R5"
 
   - psgc_region_id: "0600000000"
     roman: VI
     location: Western Visayas
     common: "6"
+    num: "R6"
 
   - psgc_region_id: "0700000000"
     roman: VII
     location: Central Visayas
     common: "7"
+    num: "R7"
 
   - psgc_region_id: "0800000000"
     roman: VIII
     location: Eastern Visayas
     common: "8"
+    num: "R8"
 
   - psgc_region_id: "0900000000"
     roman: IX
     location: Zamboanga Peninsula
     common: "9"
+    num: "R9"
 
   - psgc_region_id: "1000000000"
     roman: X
     location: Northern Mindanao
     common: "10"
+    num: "R10"
 
   - psgc_region_id: "1100000000"
     roman: XI
     location: Davao Region
     common: "11"
+    num: "R11"
 
   - psgc_region_id: "1200000000"
     roman: XII
     location: South Cotabato, Cotabato, Sultan Kudarat, Sarangani and General Santos City
     common: SOCCSKSARGEN
+    num: "R12"
 
   - psgc_region_id: "1300000000"
     roman: IV
     location: National Capital Region
     common: NCR
+    num: NCR
 
   - psgc_region_id: "1400000000"
     roman: XIV
     location: Cordillera Administrative Region
     common: CAR
+    num: CAR
 
   - psgc_region_id: "1600000000"
     roman: XIII
     location: Agusan del Norte, Agusan del Sur, Dinagat Islands, Surigao del Norte, and Surigao del Sur
     common: CARAGA
+    num: CARAGA
 
   - psgc_region_id: "1700000000"
     roman: IV-B
     location: Mindoro, Marinduque, Romblon, and Palawan
     common: MIMAROPA
+    num: R4B
 
   - psgc_region_id: "1800000000"
     roman: XV
     location: Negros Island Region
     common: NIR
+    num: NIR
 
   - psgc_region_id: "1900000000"
     roman: XVI
     location: Bangsamoro Autonomous Region in Muslim Mindanao
     common: BARMM
+    num: BARMM

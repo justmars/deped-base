@@ -2,7 +2,7 @@ from pathlib import Path
 
 import polars as pl
 
-from ..common import FIXES
+from foundation.common import FIXES
 
 
 # ========================================================
@@ -19,7 +19,7 @@ def clean_meta_location_names(meta: pl.DataFrame) -> pl.DataFrame:
     # Normalized lowercase helpers using Polars expressions
     prov_series = meta["province"].str.to_lowercase().str.strip_chars()
     muni_series = meta["municipality"].str.to_lowercase().str.strip_chars()
-    school_ids = meta["school_id"]
+    school_ids = meta["school_id"].cast(pl.Utf8)
 
     # =====================================================
     # 1. Provincial-level municipality corrections
@@ -58,7 +58,8 @@ def clean_meta_location_names(meta: pl.DataFrame) -> pl.DataFrame:
     # 3. Province fixes by school ID
     # =====================================================
     for province_name, id_list in FIXES.get("province_fixes_by_school_id", {}).items():
-        mask = school_ids.is_in(id_list)
+        normalized_ids = [str(x) for x in id_list]
+        mask = school_ids.is_in(normalized_ids)
         meta = meta.with_columns(
             pl.when(mask)
             .then(pl.lit(province_name.upper()))

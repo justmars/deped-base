@@ -9,7 +9,6 @@ from typing import Any
 import polars as pl
 import yaml
 from environs import Env
-from rich import print as rprint
 from rich.console import Console
 from rich.progress import Progress
 from rich.syntax import Syntax
@@ -17,6 +16,8 @@ from sqlite_utils import Database
 
 env = Env()
 env.read_env()
+
+console = Console()
 
 
 @dataclass
@@ -41,7 +42,7 @@ class SchoolDataBundle:
 
 
 def prep_table(db: Database, table_name: str, values: list[dict]):
-    rprint(f"Adding [green]{table_name=}[/green]...")
+    console.log(f"Adding [green]{table_name=}[/green]...")
     db[table_name].drop(ignore=True)
     db[table_name].insert_all(values, pk="id")  # type: ignore
 
@@ -87,7 +88,7 @@ def add_to(db: Database, df: pl.DataFrame, table_name: str) -> Database:
     # Convert Polars to dicts
     rows = df.to_dicts()
 
-    rprint(f"Insert {table_name=} values from [green]{len(rows)=}[/green]")
+    console.log(f"Insert {table_name=} values from [green]{len(rows)=}[/green]")
     tbl.insert_all(rows, pk="id", replace=True)  # type: ignore
     return db
 
@@ -241,10 +242,9 @@ def bulk_update(
                    or if the target column is missing.
 
     """
-    console = Console()
     start_time = time.perf_counter()
 
-    rprint(
+    console.log(
         f"[bold cyan]Updating[/bold cyan] [yellow]{tbl_name}[/yellow].{target_col} "
         f"→ [green]{fk_col}[/green] using [magenta]{dependency_tbl}.{source_col}[/magenta]"
     )
