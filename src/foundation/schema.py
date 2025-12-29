@@ -154,6 +154,18 @@ GEO_SCHEMA = TableSchema(
     ],
 )
 
+REGION_NAMES_SCHEMA = TableSchema(
+    name="region_names",
+    primary_key=["psgc_region_id", "location"],
+    columns=[
+        ColumnDef("psgc_region_id", pl.Utf8, nullable=False),
+        ColumnDef("roman", pl.Utf8),
+        ColumnDef("location", pl.Utf8, nullable=False),
+        ColumnDef("common", pl.Utf8),
+        ColumnDef("other", pl.Utf8),
+    ],
+)
+
 SCHEMAS = {
     "psgc": PSGC_SCHEMA,
     "enrollment": ENROLLMENT_SCHEMA,
@@ -162,4 +174,5 @@ SCHEMAS = {
     "meta_psgc": META_PSGC_SCHEMA,
     "address": ADDRESS_SCHEMA,
     "geo": GEO_SCHEMA,
+    "region_names": REGION_NAMES_SCHEMA,
 }

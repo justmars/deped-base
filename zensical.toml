@@ -49,6 +49,7 @@ nav = [
   { "Pipeline docs" = [
       { "Plugin overview" = "plugins.md" },
       { "PSGC extractor" = "plugins/psgc.md" },
+      { "Region names extractor" = "plugins/regions.md" },
       { "Enrollment extractor" = "plugins/enrollment.md" },
       { "Matching extractor" = "plugins/matching.md" },
       { "Address extractor" = "plugins/address.md" },

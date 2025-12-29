@@ -12,10 +12,11 @@ Each extractor now participates in that pipeline as a discrete plugin: it declar
 | Step | Plugin | Description | Document |
 | --- | --- | --- | --- |
 | 1 | `PsgcExtractor` | Loads official PSGC Excel, normalizes IDs/names, and provides the master geography table. | [PSGC extractor](/docs/plugins/psgc.md) |
-| 2 | `EnrollmentExtractor` | Melts yearly enrollment CSVs, sanitizes counts, and emits metadata + fact tables. | [Enrollment extractor](/docs/plugins/enrollment.md) |
-| 3 | `PsgcMatchingExtractor` | Matches school metadata to PSGC codes (regions → provinces → barangays). | [Matching extractor](/docs/plugins/matching.md) |
-| 4 | `AddressDimensionExtractor` | Builds canonical `_addr_hash` + address bridge table. | [Address extractor](/docs/plugins/address.md) |
-| 5 | `GeoExtractor` | Joins coordinates plus address IDs to enrich the geography fact table. | [Geodata extractor](/docs/plugins/geodata.md) |
+| 2 | `RegionNamesExtractor` | Loads the curated region alias table so every PSGC region ID has roman/location/common aliases available. | [Region names extractor](/docs/plugins/regions.md) |
+| 3 | `EnrollmentExtractor` | Melts yearly enrollment CSVs, sanitizes counts, and emits metadata + fact tables. | [Enrollment extractor](/docs/plugins/enrollment.md) |
+| 4 | `PsgcMatchingExtractor` | Matches school metadata to PSGC codes (regions → provinces → barangays). | [Matching extractor](/docs/plugins/matching.md) |
+| 5 | `AddressDimensionExtractor` | Builds canonical `_addr_hash` + address bridge table. | [Address extractor](/docs/plugins/address.md) |
+| 6 | `GeoExtractor` | Joins coordinates plus address IDs to enrich the geography fact table. | [Geodata extractor](/docs/plugins/geodata.md) |
 
 Any new extractor that follows this contract plugs into `cli build` automatically; no further orchestration edits are required. The pipeline log will print `[green]Validated schema[/green] <table>` once every table passes validation.
 
@@ -93,6 +94,12 @@ When you add teacher/headcount data via a plugin, the pipeline validates every t
 4. **Add documentation links** (e.g., update `docs/index.md` or `docs/plugins.md`) so future contributors know the schema expectations for teacher data.
 
 Once the schema is defined, your `TeachersExtractor` is auto-discovered by `PluginRegistry`. No module registration is necessary—the `SCHEMAS` entry plus the `ExtractionResult` columns are all the pipeline needs to keep contracts safe.
+
+## Source data files
+
+- `/data/generic.yml` seeds the generic lookup tables (`school_sizes`, `school_levels`, etc.) via `cli prep`.
+- `/data/regions.yml` now holds the canonical region alias catalog that `RegionNamesExtractor` loads after the PSGC table exists.
+- Keep these files in the repository so the pipeline and tests can reuse them, and update the YAML whenever new aliases or reference values are needed.
 
 ## Related reference documents
 
