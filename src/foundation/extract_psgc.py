@@ -1,37 +1,26 @@
 from pathlib import Path
 
-import numpy as np
-import pandas as pd
+import polars as pl
 
 
-def format_id_column(cell_value) -> str:
-    """Ensure PSGC ID is a 10-character zero-padded string."""
-    return str(cell_value).zfill(10)
-
-
-def convert_to_int(cell_value):
-    """Convert numeric-like cell values to int, returning NaN if invalid."""
-    try:
-        return int(float(str(cell_value).strip()))
-    except (ValueError, TypeError):
-        return np.nan
-
-
-def set_psgc(f: Path) -> pd.DataFrame:
-    """Load and clean PSGC Excel data."""
+def set_psgc(f: Path) -> pl.DataFrame:
+    """Load and clean PSGC Excel data using Polars."""
     print(f"Initializing PSGC data from {f=}")
-    df = pd.read_excel(
-        io=f,
+
+    # Read Excel file using Polars (uses calamine backend)
+    df = pl.read_excel(
+        source=f,
         sheet_name="PSGC",
-        usecols="A:I,K",
-        converters={
-            "10-digit PSGC": format_id_column,
-            "Correspondence Code": convert_to_int,
-            "2024 Population": convert_to_int,
-        },
     )
 
-    df.columns = [
+    # Select and rename columns (A:I,K = 0-8 and 10)
+    columns = df.columns
+    selected_cols = (
+        list(range(9)) + [10] if len(columns) > 10 else list(range(len(columns)))
+    )
+    df = df.select([df.columns[i] for i in selected_cols])
+
+    new_columns = [
         "id",
         "name",
         "cc",
@@ -43,17 +32,41 @@ def set_psgc(f: Path) -> pd.DataFrame:
         "2024_pop",
         "status",
     ]
+    df = df.rename({old: new for old, new in zip(df.columns, new_columns)})
 
-    # prefer old_names for provinces when present (handles historical name differences)
-    df.loc[(df["geo"] == "Prov") & (df["old_names"].notna()), "name"] = df.loc[
-        (df["geo"] == "Prov") & (df["old_names"].notna()), "old_names"
-    ]
-
-    df.replace({"-": np.nan}, inplace=True)
-    df["income_class"] = (
-        df["income_class"].fillna("").astype(str).str.replace("*", "", regex=False)
+    # Format ID column as zero-padded 10-char string
+    df = df.with_columns(
+        pl.col("id").cast(pl.Int64).cast(pl.Utf8).str.pad_start(10, "0")
     )
-    # safe fill for city_class
-    df["city_class"] = df["city_class"].fillna("").astype(str)
+
+    # Prefer old_names for provinces when present
+    df = df.with_columns(
+        pl.when((pl.col("geo") == "Prov") & (pl.col("old_names").is_not_null()))
+        .then(pl.col("old_names"))
+        .otherwise(pl.col("name"))
+        .alias("name")
+    )
+
+    # Replace "-" with null
+    df = df.with_columns(
+        [
+            pl.when(pl.col(col) == "-").then(None).otherwise(pl.col(col)).alias(col)
+            for col in df.columns
+        ]
+    )
+
+    # Clean income_class: fill nulls with "" and remove "*"
+    df = df.with_columns(
+        pl.col("income_class")
+        .fill_null("")
+        .cast(pl.Utf8)
+        .str.replace_all("*", "")
+        .alias("income_class")
+    )
+
+    # Safe fill for city_class: fill nulls with ""
+    df = df.with_columns(
+        pl.col("city_class").fill_null("").cast(pl.Utf8).alias("city_class")
+    )
 
     return df

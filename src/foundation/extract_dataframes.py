@@ -1,4 +1,6 @@
-import pandas as pd
+import hashlib
+
+import polars as pl
 from rich import print as rprint
 
 from .common import env
@@ -9,7 +11,7 @@ from .match_psgc_schools import match_psgc_schools
 
 
 def extract_dataframes() -> tuple[
-    pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame
+    pl.DataFrame, pl.DataFrame, pl.DataFrame, pl.DataFrame, pl.DataFrame
 ]:
     enroll_dir = env.path("ENROLL_DIR")
     psgc_file = env.path("PSGC_FILE")
@@ -41,7 +43,7 @@ def extract_dataframes() -> tuple[
     )
 
     # -----------------------------
-    # Phase 3: Address dimension (Option 2, now safe)
+    # Phase 3: Address dimension
     # -----------------------------
     ADDR_KEY_COLS = [
         "psgc_region_id",
@@ -51,31 +53,44 @@ def extract_dataframes() -> tuple[
     ]
 
     rprint("[blue]Building address dimension...[/blue]")
-    addr_key = meta_psgc[ADDR_KEY_COLS].fillna("").astype(str).agg("|".join, axis=1)
 
-    meta_psgc["_addr_hash"] = pd.util.hash_pandas_object(addr_key, index=False)
+    # Create address hash by combining PSGC fields
+    def hash_row(cols):
+        """Hash concatenated PSGC fields."""
+        key = "|".join(str(v) if v is not None else "" for v in cols)
+        return int(hashlib.md5(key.encode()).hexdigest()[:15], 16)
 
-    addresses = (
-        meta_psgc[ADDR_KEY_COLS + ["_addr_hash"]]
-        .drop_duplicates("_addr_hash")
-        .reset_index(drop=True)
+    meta_psgc = meta_psgc.with_columns(
+        pl.concat_list(ADDR_KEY_COLS)
+        .map_elements(hash_row, return_dtype=pl.Int64)
+        .alias("_addr_hash")
     )
-    addresses["address_id"] = addresses.index + 1
 
+    # Build addresses dimension
+    addresses = meta_psgc.select(ADDR_KEY_COLS + ["_addr_hash"]).unique(
+        subset=["_addr_hash"]
+    )
+    addresses = addresses.with_columns(
+        pl.int_range(1, pl.len() + 1).alias("address_id")
+    )
+
+    # Join addresses back to meta
     addr_df = (
-        meta_psgc[["school_id", "school_year", "_addr_hash"]]
-        .merge(addresses[["_addr_hash", "address_id"]], on="_addr_hash")
-        .drop_duplicates()
+        meta_psgc.select(["school_id", "school_year", "_addr_hash"])
+        .join(
+            addresses.select(["_addr_hash", "address_id"]), on="_addr_hash", how="left"
+        )
+        .unique()
     )
-    # SQLite does not have a native int64 type, so we convert to int64
-    addr_df["_addr_hash"] = addr_df["_addr_hash"].astype(dtype="int64")
+
+    # Convert hash to int64 for SQLite
+    addr_df = addr_df.with_columns(pl.col("_addr_hash").cast(pl.Int64))
 
     # -----------------------------
     # Phase 4: Geo enrichment
     # -----------------------------
     rprint("[blue]Setting coordinates...[/blue]")
     geo_df = set_coordinates(geo_file=geo_file, meta_df=meta_psgc)
-    # SQLite does not have a native int64 type, so we convert to int64
-    geo_df["_addr_hash"] = geo_df["_addr_hash"].astype(dtype="int64")
+    geo_df = geo_df.with_columns(pl.col("_addr_hash").cast(pl.Int64))
 
     return (psgc_df, enroll_df, geo_df, levels_df, addr_df)

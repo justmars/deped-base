@@ -11,9 +11,11 @@ dependencies = [
     "environs>=14.3.0",
     # format logs
     "rich>=14.2",
-    # cleaning and data handling
+    # data processing (polars primary, pandas for compatibility)
+    "polars>=0.20.13",
     "pandas>=2.3",
-    # read excel files
+    # read excel files (calamine for polars, openpyxl fallback)
+    "calamine>=0.2.8",
     "openpyxl>=3.1.5",
     # db setup
     "sqlite-utils>=3.39",
