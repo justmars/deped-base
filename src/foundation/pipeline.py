@@ -1,20 +1,19 @@
-import hashlib
-from dataclasses import dataclass
-from pathlib import Path
+from __future__ import annotations
+
+from dataclasses import dataclass, field
 
 import polars as pl
 from rich import print as rprint
 
 from .common import env
-from .plugins.geodata import set_coordinates
-from .plugins.matching import match_psgc_schools
-from .plugins.meta import unpack_enroll_data
-from .plugins.psgc import set_psgc
+from .plugin import BaseExtractor, ExtractionContext, ExtractionResult, SourcePaths
+from .registry import PluginRegistry
+from .schema import SCHEMAS
 
 
 @dataclass(frozen=True)
 class ExtractedFrames:
-    """Named container for the pipeline tables produced during extraction."""
+    """Legacy container that mirrors the original pipeline outputs."""
 
     psgc: pl.DataFrame
     enrollment: pl.DataFrame
@@ -23,126 +22,152 @@ class ExtractedFrames:
     address: pl.DataFrame
 
 
-@dataclass(frozen=True)
-class _SourcePaths:
-    enroll_dir: Path
-    psgc_file: Path
-    geo_file: Path
+@dataclass
+class PipelineOutput:
+    """Aggregated plugin output for the new orchestration flow."""
+
+    tables: dict[str, pl.DataFrame]
+    metrics: dict[str, object] = field(default_factory=dict)
+
+    def get(self, name: str) -> pl.DataFrame | None:
+        return self.tables.get(name)
 
 
-@dataclass(frozen=True)
-class _AddressDimension:
-    meta_with_hash: pl.DataFrame
-    address_df: pl.DataFrame
+class PipelineExecutionError(RuntimeError):
+    """Raised when the plugin dependency graph cannot be resolved."""
 
 
-def _resolve_source_paths() -> _SourcePaths:
-    """Read configured source paths and log their locations.
+class PluginPipeline:
+    """Discover, sort, and execute extractor plugins."""
 
-    Returns:
-        _SourcePaths: Paths to enrollment folder, PSGC file, and geo file.
-    """
+    def __init__(self, registry: PluginRegistry | None = None):
+        self.registry = registry or PluginRegistry()
+        self.paths = self._resolve_source_paths()
+        self.context = ExtractionContext(paths=self.paths)
+        self.plugins = self._load_plugins()
+        self.execution_order = self._resolve_execution_order()
 
-    enroll_dir = env.path("ENROLL_DIR")
-    psgc_file = env.path("PSGC_FILE")
-    geo_file = env.path("GEO_FILE")
+    def _resolve_source_paths(self) -> SourcePaths:
+        enroll_dir = env.path("ENROLL_DIR")
+        psgc_file = env.path("PSGC_FILE")
+        geo_file = env.path("GEO_FILE")
 
-    for label, path in (
-        ("enroll_dir", enroll_dir),
-        ("psgc_file", psgc_file),
-        ("geo_file", geo_file),
-    ):
-        rprint(f"Detected: {label}={path}")
+        for label, path in (
+            ("enroll_dir", enroll_dir),
+            ("psgc_file", psgc_file),
+            ("geo_file", geo_file),
+        ):
+            rprint(f"Detected: {label}={path}")
 
-    return _SourcePaths(enroll_dir=enroll_dir, psgc_file=psgc_file, geo_file=geo_file)
-
-
-def _build_address_dimension(meta_psgc: pl.DataFrame) -> _AddressDimension:
-    """Create the address hash and canonical address table for PSGC metadata.
-
-    Args:
-        meta_psgc (pl.DataFrame): PSGC-matched school metadata.
-
-    Returns:
-        _AddressDimension: Meta enriched with `_addr_hash` plus address table.
-    """
-
-    ADDR_KEY_COLS = [
-        "psgc_region_id",
-        "psgc_provhuc_id",
-        "psgc_muni_id",
-        "psgc_brgy_id",
-    ]
-
-    rprint("[blue]Building address dimension...[/blue]")
-
-    def _hash_row(cols):
-        key = "|".join(str(v) if v is not None else "" for v in cols)
-        return int(hashlib.md5(key.encode()).hexdigest()[:15], 16)
-
-    meta_with_hash = meta_psgc.with_columns(
-        pl.concat_list(ADDR_KEY_COLS)
-        .map_elements(_hash_row, return_dtype=pl.Int64)
-        .alias("_addr_hash")
-    )
-
-    addresses = (
-        meta_with_hash.select(ADDR_KEY_COLS + ["_addr_hash"])
-        .unique(subset=["_addr_hash"])
-        .with_columns(pl.int_range(1, pl.len() + 1).alias("address_id"))
-        .with_columns(pl.col("_addr_hash").cast(pl.Int64))
-    )
-
-    addr_df = (
-        meta_with_hash.select(["school_id", "school_year", "_addr_hash"])
-        .join(
-            addresses.select(["_addr_hash", "address_id"]),
-            on="_addr_hash",
-            how="left",
+        return SourcePaths(
+            enroll_dir=enroll_dir, psgc_file=psgc_file, geo_file=geo_file
         )
-        .unique()
-        .with_columns(pl.col("_addr_hash").cast(pl.Int64))
-    )
 
-    return _AddressDimension(meta_with_hash=meta_with_hash, address_df=addr_df)
+    def _load_plugins(self) -> dict[str, BaseExtractor]:
+        plugin_classes = self.registry.discover()
+        instances: dict[str, BaseExtractor] = {}
+        for name, cls in plugin_classes.items():
+            instances[name] = cls()
+        return instances
+
+    def _map_table_producers(self) -> dict[str, str]:
+        producers: dict[str, str] = {}
+        for name, plugin in self.plugins.items():
+            for table_name in getattr(plugin, "outputs", []):
+                if table_name in producers:
+                    raise PipelineExecutionError(
+                        f"Table '{table_name}' already produced by {producers[table_name]}"
+                    )
+                producers[table_name] = name
+        return producers
+
+    def _build_dependency_graph(self) -> dict[str, set[str]]:
+        graph: dict[str, set[str]] = {name: set() for name in self.plugins}
+        producers = self._map_table_producers()
+        for name, plugin in self.plugins.items():
+            for dependency in getattr(plugin, "depends_on", []):
+                producer = producers.get(dependency)
+                if producer is None:
+                    raise PipelineExecutionError(
+                        f"{name} requires '{dependency}' but no plugin produces it"
+                    )
+                graph[name].add(producer)
+        return graph
+
+    def _resolve_execution_order(self) -> list[BaseExtractor]:
+        graph = self._build_dependency_graph()
+        graph_copy = {name: set(deps) for name, deps in graph.items()}
+        order: list[BaseExtractor] = []
+        ready = [name for name, deps in graph_copy.items() if not deps]
+
+        while ready:
+            current = ready.pop(0)
+            order.append(self.plugins[current])
+            for downstream, deps in graph_copy.items():
+                if current in deps:
+                    deps.remove(current)
+                    if not deps:
+                        ready.append(downstream)
+
+        if len(order) != len(self.plugins):
+            unresolved = {name for name, deps in graph_copy.items() if deps}
+            raise PipelineExecutionError(f"Circular dependency detected: {unresolved}")
+
+        return order
+
+    def execute(self) -> PipelineOutput:
+        collected: dict[str, pl.DataFrame] = {}
+        metrics: dict[str, object] = {}
+
+        for plugin in self.execution_order:
+            inputs: dict[str, pl.DataFrame] = {}
+            missing: list[str] = []
+            for dependency in plugin.depends_on:
+                table = collected.get(dependency)
+                if table is None:
+                    missing.append(dependency)
+                else:
+                    inputs[dependency] = table
+            if missing:
+                raise PipelineExecutionError(
+                    f"{plugin.name} cannot resolve inputs: {missing}"
+                )
+
+            result = plugin.extract(context=self.context, dependencies=inputs)
+            for table_name, table in result.tables.items():
+                self._validate_table_contract(table_name=table_name, table=table)
+                collected[table_name] = table
+            metrics.update(result.metrics)
+
+        return PipelineOutput(tables=collected, metrics=metrics)
+
+    def _validate_table_contract(self, table_name: str, table: pl.DataFrame) -> None:
+        schema = SCHEMAS.get(table_name)
+        if not schema:
+            return
+
+        errors = schema.validate(table)
+        if not errors:
+            rprint(f"[green]Validated schema[/green] {table_name}")
+            return
+
+        sample = table.head(3).to_dicts()
+        raise PipelineExecutionError(
+            f"Schema validation failed for {table_name}: "
+            f"{'; '.join(errors)}; sample={sample}"
+        )
+
+
+def frames_from_pipeline_output(output: PipelineOutput) -> ExtractedFrames:
+    return ExtractedFrames(
+        psgc=output.tables["psgc"],
+        enrollment=output.tables["enrollment"],
+        geo=output.tables["geo"],
+        levels=output.tables["school_levels"],
+        address=output.tables["address"],
+    )
 
 
 def extract_dataframes() -> ExtractedFrames:
-    """Load reference data, enrich geo dimensions, and return named tables.
-
-    Returns:
-        ExtractedFrames: PSGC, enrollment, geo, levels, and address tables.
-    """
-
-    paths = _resolve_source_paths()
-
-    # Reference data
-    psgc_df = set_psgc(f=paths.psgc_file)
-
-    # Enrollment metadata and levels
-    school_year_meta, enroll_df, levels_df = unpack_enroll_data(
-        enrolment_folder=paths.enroll_dir
-    )
-
-    # PSGC matching pipeline
-    rprint("[blue]Matching schools to PSGC...[/blue]")
-    meta_psgc = match_psgc_schools(
-        psgc_df=psgc_df,
-        school_location_df=school_year_meta,
-    )
-
-    # Address dimension
-    dimension = _build_address_dimension(meta_psgc=meta_psgc)
-
-    # Geo enrichment
-    rprint("[blue]Setting coordinates...[/blue]")
-    geo_df = set_coordinates(geo_file=paths.geo_file, meta_df=dimension.meta_with_hash)
-    geo_df = geo_df.with_columns(pl.col("_addr_hash").cast(pl.Int64))
-
-    return ExtractedFrames(
-        psgc=psgc_df,
-        enrollment=enroll_df,
-        geo=geo_df,
-        levels=levels_df,
-        address=dimension.address_df,
-    )
+    pipeline = PluginPipeline()
+    return frames_from_pipeline_output(pipeline.execute())

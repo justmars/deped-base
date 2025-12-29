@@ -4,6 +4,7 @@ from pathlib import Path
 import polars as pl
 from rich import print as rprint
 
+from ..plugin import BaseExtractor, ExtractionContext, ExtractionResult
 from ..transforms.location import clean_meta_location_names
 from ..transforms.school_name import clean_school_name
 
@@ -458,3 +459,27 @@ def unpack_enroll_data(
     )
 
     return school_year_meta, enroll, school_year_offered_levels
+
+
+class EnrollmentExtractor(BaseExtractor):
+    """Wraps the enrollment extraction logic so it can run as a plugin."""
+
+    name = "enrollment"
+    outputs = ["school_year_meta", "enrollment", "school_levels"]
+
+    def extract(
+        self,
+        context: ExtractionContext,
+        dependencies: dict[str, pl.DataFrame],
+    ) -> ExtractionResult:
+        del dependencies
+        school_year_meta, enrollment, school_levels = unpack_enroll_data(
+            enrolment_folder=context.paths.enroll_dir
+        )
+        return ExtractionResult(
+            tables={
+                "school_year_meta": school_year_meta,
+                "enrollment": enrollment,
+                "school_levels": school_levels,
+            }
+        )

@@ -2,6 +2,8 @@ from pathlib import Path
 
 import polars as pl
 
+from ..plugin import BaseExtractor, ExtractionContext, ExtractionResult
+
 
 def set_psgc(f: Path) -> pl.DataFrame:
     """Load and clean PSGC Excel data using Polars."""
@@ -71,3 +73,20 @@ def set_psgc(f: Path) -> pl.DataFrame:
     )
 
     return df
+
+
+class PsgcExtractor(BaseExtractor):
+    """PSGC loader that conforms to the extractor interface."""
+
+    name = "psgc"
+    outputs = ["psgc"]
+    schema_name = "psgc"
+
+    def extract(
+        self,
+        context: ExtractionContext,
+        dependencies: dict[str, pl.DataFrame],
+    ) -> ExtractionResult:
+        del dependencies
+        df = set_psgc(f=context.paths.psgc_file)
+        return ExtractionResult(tables={"psgc": df})

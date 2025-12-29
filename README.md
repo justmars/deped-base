@@ -1,46 +1,48 @@
 # Foundation
 
-This project integrates data from these sources to generate a single sqlite file:
+This project combines:
 
-1. [Project Bukas](https://www.deped.gov.ph/machine-ready-files/) enrollment datasets;
-2. [Philippine Standard Geographic Code (PSGC)](https://psa.gov.ph/classification/psgc) using the address fields from enrollment datasets;
-3. Additional geospatial metadata from manually-curated longitude / latitude values.
+1. [Project Bukas](https://www.deped.gov.ph/machine-ready-files/) enrollment CSVs;
+2. [Philippine Standard Geographic Code (PSGC)](https://psa.gov.ph/classification/psgc);
+3. Manually curated geocoordinates.
+
+The result is a time-aware, PSGC-anchored warehouse of enrollment facts, school-year metadata, geography, and canonical addresses. `cli build` creates the database that feeds downstream school-observation analytics, scorecards, mapping workloads, and insight tooling.
 
 > [!IMPORTANT]
 > The longitude / latitude file is presently generated through a third-party repository. This should be integrated here in the future.
 
-The resulting database is a time-aware, PSGC-anchored education data warehouse that separates enrollment facts, school-year metadata, geographic identity, and address normalization—designed for accurate analytics, mapping, and policy use.
+## Architecture highlights
 
-## Project layout
-
-- `src/foundation/pipeline.py`: orchestrates extract → transform → load and returns the typed `ExtractedFrames`.
-- `src/foundation/plugins/`: houses each extractor and matching helper (PSGC, enrollment metadata, geodata, address matching) so new sources can be added via plugins.
-- `src/foundation/transforms/`: shared cleanup utilities (location fixes, school-name normalization, reorder helpers) isolated for reuse.
-- `src/foundation/loaders/`: loader helpers (currently the enrollment table wiring) keep database writes separate from extraction concerns.
+- `src/foundation/pipeline.py` orchestrates the extract → transform → load flow while still returning the legacy `ExtractedFrames`.
+- `src/foundation/plugins/` now exposes a plug-and-play extractor system: each `BaseExtractor` declares `depends_on`/`outputs`, the runtime enforces `SCHEMAS`, and discovery is automatic via filesystem scanning (no registration required).
+- `src/foundation/transforms/` houses reusable cleanup helpers (location fixes, name normalization, reorder utilities) so extractors stay focused.
+- `src/foundation/loaders/` handles SQLite writes (enrollment tables, lookup wiring) off the critical extraction path so tests can mock ingestion easily.
+- `src/foundation/schema.py` centralizes every table contract; plugin outputs that do not match raise `PipelineExecutionError` before any data hits SQLite.
 
 ## Extraction rules
 
-Detailed notes about the extraction behavior live in `docs/extraction_rules.md`, covering PSGC name normalization, enrollment melting/`num_students` cleanup, logging of invalid rows, and the dependent matching flow. Keep this file in sync whenever the pipeline adds or refactors a rule.
+`docs/extraction_rules.md` details the PSGC naming fixes, enrollment melting heuristics, `num_students` sanitization, invalid-row logging, matching dependencies, and address hashing that underlies the pipeline. Keep it synchronized whenever new transforms or validation rules are introduced.
 
 ## Development
 
 ```sh
-uv sync --all-extras # will create the foundation package, see pyproject.toml
-source .venv/bin/activate # enter virtual environment
+uv sync --all-extras # creates the foundation package, defined in pyproject.toml
+source .venv/bin/activate # enter the virtual environment
 ```
 
 ## Run
 
-Rename env.example to `.env` (contains the name of the `DB_FILE`, set to `deped.db`).
+Rename `env.example` to `.env` (it configures `DB_FILE`, `ENROLL_DIR`, `PSGC_FILE`, etc.).
 
 ```sh
-cli # show the different commands
-cli prep # deped.db created w/ some generic tables
-cli build # populates deped.db from /data files
+zensical serve # show docs
+cli            # show available commands
+cli prep       # creates the database and seeds reference tables
+cli build      # runs all extractors, validates schemas, and writes the tables
 ```
 
-## Docs
+## Extensions & docs
 
-```sh
-zensical serve
-```
+- `docs/plugins.md` explains the plugin workflow and how to add new extractors (e.g., teacher data) without touching the orchestration.
+- `docs/plugins/*.md` contains per-extractor reference pages (PSGC loader, enrollment melt, matching, address dimension, geodata) so you can trace each table from source to SQLite.
+- `docs/enrolment_origin.md` and `docs/brgy_names.md` provide deeper context for the enrollment source files and PSGC matching edge cases, respectively.

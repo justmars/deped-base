@@ -1,5 +1,6 @@
 import polars as pl
 
+from ...plugin import BaseExtractor, ExtractionContext, ExtractionResult
 from ...transforms.fixes import fill_missing_psgc
 from ...transforms.normalize import get_divisions
 from ...transforms.reorder import reorganize_school_geo_df
@@ -102,3 +103,23 @@ def match_psgc_schools(
     reordered_df = reorganize_school_geo_df(df=df)
 
     return reordered_df
+
+
+class PsgcMatchingExtractor(BaseExtractor):
+    """Expose the PSGC matching flow as a plugin."""
+
+    name = "meta_psgc"
+    depends_on = ["psgc", "school_year_meta"]
+    outputs = ["meta_psgc"]
+
+    def extract(
+        self,
+        context: ExtractionContext,
+        dependencies: dict[str, pl.DataFrame],
+    ) -> ExtractionResult:
+        del context
+        matched = match_psgc_schools(
+            psgc_df=dependencies["psgc"],
+            school_location_df=dependencies["school_year_meta"],
+        )
+        return ExtractionResult(tables={"meta_psgc": matched})

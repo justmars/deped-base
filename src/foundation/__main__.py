@@ -8,7 +8,7 @@ from sqlite_utils import Database
 
 from .common import add_to, bulk_update, env, prep_table
 from .loaders.enrollment import set_enrollment_tables
-from .pipeline import ExtractedFrames, extract_dataframes
+from .pipeline import ExtractedFrames, PluginPipeline, frames_from_pipeline_output
 
 
 @click.group()
@@ -51,7 +51,12 @@ def build():
 
     db = _open_wal_database(target)
     try:
-        data = extract_dataframes()
+        pipeline = PluginPipeline()
+        rprint("[blue]Discovered extractors:[/blue]", len(pipeline.plugins))
+        order = ", ".join(plugin.name for plugin in pipeline.execution_order)
+        rprint("[blue]Execution order:[/blue]", order)
+        output = pipeline.execute()
+        data = frames_from_pipeline_output(output)
         db = _load_lookup_tables(
             db=db, enrollment_df=data.enrollment, levels_df=data.levels
         )

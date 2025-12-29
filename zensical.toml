@@ -46,6 +46,14 @@ Copyright &copy; 2025 The authors
 # Read more: https://zensical.org/docs/setup/navigation/
 nav = [
   { "Get started" = "index.md" },
+  { "Pipeline docs" = [
+      { "Plugin overview" = "plugins.md" },
+      { "PSGC extractor" = "plugins/psgc.md" },
+      { "Enrollment extractor" = "plugins/enrollment.md" },
+      { "Matching extractor" = "plugins/matching.md" },
+      { "Address extractor" = "plugins/address.md" },
+      { "Geodata extractor" = "plugins/geodata.md" },
+  ]},
   { "Enrolment Data" = "enrolment_origin.md" },
   { "Barangay Names" = "brgy_names.md" },
 ]
