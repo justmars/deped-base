@@ -1,12 +1,12 @@
 import polars as pl
 
-from .apply_fixes import fill_missing_psgc
-from .extract_brgy import apply_barangay_corrections, attach_psgc_brgy_id
-from .extract_muni import attach_psgc_muni_id
-from .extract_province import attach_psgc_provhuc_codes
-from .extract_region import attach_psgc_region_codes
-from .normalize import get_divisions
-from .reorder_columns import reorganize_school_geo_df
+from ...transforms.fixes import fill_missing_psgc
+from ...transforms.normalize import get_divisions
+from ...transforms.reorder import reorganize_school_geo_df
+from .barangay import apply_barangay_corrections, attach_psgc_brgy_id
+from .municipality import attach_psgc_muni_id
+from .province import attach_psgc_provhuc_codes
+from .region import attach_psgc_region_codes
 
 
 def match_psgc_schools(

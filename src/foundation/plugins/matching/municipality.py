@@ -4,7 +4,7 @@ from collections.abc import Iterable
 import polars as pl
 from rich import print as rprint
 
-from .common import normalize_geo_name
+from ...common import normalize_geo_name
 
 
 def _allowed_prefixes_from_provhuc(provhuc_value) -> set[str]:

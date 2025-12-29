@@ -4,8 +4,8 @@ from pathlib import Path
 import polars as pl
 from rich import print as rprint
 
-from .clean_location_names import clean_meta_location_names
-from .clean_school_names import clean_school_name
+from ..transforms.location import clean_meta_location_names
+from ..transforms.school_name import clean_school_name
 
 # -----------------------------------------
 # 1. Constants (Centralized)

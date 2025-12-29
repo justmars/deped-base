@@ -1,7 +1,7 @@
 import polars as pl
 from rich import print as rprint
 
-from .common import FIXES, convert_trailing_roman, normalize_geo_name
+from ...common import FIXES, convert_trailing_roman, normalize_geo_name
 
 
 def fix_barangay_enye_value(barangay):

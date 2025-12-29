@@ -1,7 +1,7 @@
 import polars as pl
 import pytest
 
-from src.foundation.extract_meta import (
+from src.foundation.plugins.meta import (
     _log_invalid_num_student_rows,
     extract_grade_sex_columns,
     extract_school_year,

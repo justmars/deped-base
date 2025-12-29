@@ -1,7 +1,7 @@
 import polars as pl
 import pytest
 
-from src.foundation.extract_psgc import set_psgc
+from src.foundation.plugins.psgc import set_psgc
 
 
 class TestPSGCExtraction:

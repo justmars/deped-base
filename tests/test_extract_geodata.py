@@ -1,6 +1,6 @@
 import polars as pl
 
-from src.foundation.extract_geodata import set_coordinates
+from src.foundation.plugins.geodata import set_coordinates
 
 
 class TestGeoDataExtraction:

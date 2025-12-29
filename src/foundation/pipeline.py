@@ -6,10 +6,10 @@ import polars as pl
 from rich import print as rprint
 
 from .common import env
-from .extract_geodata import set_coordinates
-from .extract_meta import unpack_enroll_data
-from .extract_psgc import set_psgc
-from .match_psgc_schools import match_psgc_schools
+from .plugins.geodata import set_coordinates
+from .plugins.matching import match_psgc_schools
+from .plugins.meta import unpack_enroll_data
+from .plugins.psgc import set_psgc
 
 
 @dataclass(frozen=True)

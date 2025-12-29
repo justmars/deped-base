@@ -7,8 +7,8 @@ from rich import print as rprint
 from sqlite_utils import Database
 
 from .common import add_to, bulk_update, env, prep_table
-from .extract_dataframes import ExtractedFrames, extract_dataframes
-from .extract_enrollment import set_enrollment_tables
+from .loaders.enrollment import set_enrollment_tables
+from .pipeline import ExtractedFrames, extract_dataframes
 
 
 @click.group()

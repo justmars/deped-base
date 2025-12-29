@@ -1,7 +1,7 @@
 import polars as pl
 from rich import print as rprint
 
-from .common import normalize_geo_name
+from ...common import normalize_geo_name
 
 
 def prepare_psgc(psgc: pl.DataFrame) -> pl.DataFrame:

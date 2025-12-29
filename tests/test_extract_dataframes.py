@@ -1,6 +1,6 @@
 import polars as pl
 
-from src.foundation.extract_dataframes import ExtractedFrames, extract_dataframes
+from src.foundation.pipeline import ExtractedFrames, extract_dataframes
 
 
 class TestDataFrameExtraction:

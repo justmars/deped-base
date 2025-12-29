@@ -11,6 +11,13 @@ This project integrates data from these sources to generate a single sqlite file
 
 The resulting database is a time-aware, PSGC-anchored education data warehouse that separates enrollment facts, school-year metadata, geographic identity, and address normalization—designed for accurate analytics, mapping, and policy use.
 
+## Project layout
+
+- `src/foundation/pipeline.py`: orchestrates extract → transform → load and returns the typed `ExtractedFrames`.
+- `src/foundation/plugins/`: houses each extractor and matching helper (PSGC, enrollment metadata, geodata, address matching) so new sources can be added via plugins.
+- `src/foundation/transforms/`: shared cleanup utilities (location fixes, school-name normalization, reorder helpers) isolated for reuse.
+- `src/foundation/loaders/`: loader helpers (currently the enrollment table wiring) keep database writes separate from extraction concerns.
+
 ## Development
 
 ```sh
