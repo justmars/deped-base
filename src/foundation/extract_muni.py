@@ -1,7 +1,7 @@
 import re
 from collections.abc import Iterable
 
-import pandas as pd
+import polars as pl
 from rich import print as rprint
 
 from .common import normalize_geo_name
@@ -34,7 +34,7 @@ def _allowed_prefixes_from_provhuc(provhuc_value) -> set[str]:
 
     # handle missing
     if provhuc_value is None or (
-        isinstance(provhuc_value, float) and pd.isna(provhuc_value)
+        isinstance(provhuc_value, float) and provhuc_value != provhuc_value  # NaN check
     ):
         return prefixes
 
@@ -66,7 +66,7 @@ def _allowed_prefixes_from_provhuc(provhuc_value) -> set[str]:
     return prefixes
 
 
-def attach_psgc_muni_id(meta: pd.DataFrame, psgc: pd.DataFrame) -> pd.DataFrame:
+def attach_psgc_muni_id(meta: pl.DataFrame, psgc: pl.DataFrame) -> pl.DataFrame:
     """
     Populate meta['psgc_muni_id'] by matching municipality names against PSGC City/Mun rows
     filtered by allowed prefixes derived from meta['psgc_provhuc_id'].
@@ -100,26 +100,36 @@ def attach_psgc_muni_id(meta: pd.DataFrame, psgc: pd.DataFrame) -> pd.DataFrame:
         raise Exception("Missing dependency.")
     rprint("[cyan]Attaching PSGC municipality codes...[/cyan]")
 
-    meta = meta.copy()
-    psgc = psgc.copy()
-
     # Normalize meta municipality for matching
-    meta["normalized_municipality"] = meta["municipality"].apply(normalize_geo_name)
+    meta = meta.with_columns(
+        normalized_municipality=pl.col("municipality").map_elements(
+            normalize_geo_name, return_dtype=pl.Utf8
+        )
+    )
 
     # Prepare PSGC submun/city/mun candidate table and normalized names
-    citymun_df = psgc[psgc["geo"].isin(["SubMun", "City", "Mun"])].copy()
-    citymun_df["psgc_id_str"] = citymun_df["id"].astype(str)
-    citymun_df["normalized_name"] = citymun_df["name"].apply(normalize_geo_name)
+    citymun_df = psgc.filter(
+        pl.col("geo").is_in(["SubMun", "City", "Mun"])
+    ).with_columns(
+        psgc_id_str=pl.col("id").cast(pl.Utf8),
+        normalized_name=pl.col("name").map_elements(
+            normalize_geo_name, return_dtype=pl.Utf8
+        ),
+    )
 
     # Build a mapping: normalized_name -> list of full ids (to handle duplicates safely)
     candidates_by_name: dict[str, list[str]] = {}
-    for row in citymun_df.itertuples(index=False):
-        nm = row.normalized_name
-        candidates_by_name.setdefault(nm, []).append(str(row.psgc_id_str))  # type: ignore
+    for row in citymun_df.iter_rows(named=True):
+        nm = row["normalized_name"]
+        if nm not in candidates_by_name:
+            candidates_by_name[nm] = []
+        candidates_by_name[nm].append(row["psgc_id_str"])
 
     # For faster prefix filtering, build an index of id -> normalized_name
     id_to_name = dict(
-        zip(citymun_df["psgc_id_str"].astype(str), citymun_df["normalized_name"])
+        zip(
+            citymun_df["psgc_id_str"].to_list(), citymun_df["normalized_name"].to_list()
+        )
     )
 
     # Helper to gather candidate ids for a given set of prefixes
@@ -135,41 +145,39 @@ def attach_psgc_muni_id(meta: pd.DataFrame, psgc: pd.DataFrame) -> pd.DataFrame:
                     break
         return out
 
-    # Now iterate rows in meta and pick best match
-    muni_ids = []
     # Cache prefix->candidate_ids to avoid repeated scanning
     prefix_cache: dict[tuple[str, ...], set[str]] = {}
 
-    for _, row in meta.iterrows():
-        provhuc_val = row.get("psgc_provhuc_id", None)
+    # Build list of muni_ids by row
+    def get_muni_id(provhuc_val, norm_muni):
         prefixes = _allowed_prefixes_from_provhuc(provhuc_val)
-
-        key = tuple(sorted(prefixes))  # cache key
+        key = tuple(sorted(prefixes))
         if key in prefix_cache:
             candidate_ids = prefix_cache[key]
         else:
             candidate_ids = _candidate_ids_for_prefixes(prefixes)
             prefix_cache[key] = candidate_ids
 
-        norm_muni = row["normalized_municipality"]
-
         # Quick path: if normalized name not present among any city/mun candidates, None
-        # But we must check only among candidate_ids
         found_id = None
-        # If no prefix restriction candidate_ids may be all ids; match by name lookup first
         if not prefixes:
-            # lookup by name in candidates_by_name
             ids_for_name = candidates_by_name.get(norm_muni, [])
             found_id = ids_for_name[0] if ids_for_name else None
         else:
-            # Need to find a candidate id among candidate_ids whose normalized name == norm_muni
-            # We'll iterate candidate_ids and test id_to_name
             for cid in candidate_ids:
                 if id_to_name.get(cid) == norm_muni:
                     found_id = cid
                     break
+        return found_id
 
-        muni_ids.append(found_id)
+    # Apply to all rows
+    meta = meta.with_columns(
+        psgc_muni_id=pl.struct(
+            ["psgc_provhuc_id", "normalized_municipality"]
+        ).map_elements(
+            lambda x: get_muni_id(x["psgc_provhuc_id"], x["normalized_municipality"]),
+            return_dtype=pl.Utf8,
+        )
+    )
 
-    meta["psgc_muni_id"] = muni_ids
     return meta

@@ -1,4 +1,4 @@
-import pandas as pd
+import polars as pl
 import pytest
 
 from src.foundation.extract_meta import (
@@ -20,7 +20,7 @@ class TestMetaExtraction:
 
     def test_extract_grade_sex_columns(self):
         """Test identification of enrollment columns."""
-        df = pd.DataFrame(
+        df = pl.DataFrame(
             {
                 "school_id": [1, 2],
                 "school_name": ["A", "B"],
@@ -38,7 +38,7 @@ class TestMetaExtraction:
 
     def test_split_grade_strand_sex(self):
         """Test splitting grade/strand/sex columns."""
-        series = pd.Series(
+        series = pl.Series(
             [
                 "kinder_male",
                 "kinder_female",
@@ -50,14 +50,18 @@ class TestMetaExtraction:
 
         result = split_grade_strand_sex(series)
 
-        assert len(result) == 5
-        assert result.iloc[0]["grade"] == "kinder"
-        assert result.iloc[0]["sex"] == "male"
-        assert pd.isna(result.iloc[0]["strand"])
+        # Result is a DataFrame with 5 rows
+        assert isinstance(result, pl.DataFrame)
+        assert result.height == 5
 
-        assert result.iloc[2]["grade"] == "g11"
-        assert result.iloc[2]["strand"] == "stem"
-        assert result.iloc[2]["sex"] == "male"
+        # Check specific rows
+        assert result["grade"][0] == "kinder"
+        assert result["sex"][0] == "male"
+        assert result["strand"][0] is None
+
+        assert result["grade"][2] == "g11"
+        assert result["strand"][2] == "stem"
+        assert result["sex"][2] == "male"
 
     def test_unpack_enroll_data(self, test_env):
         """Test unpacking enrollment data from directory."""
@@ -68,9 +72,13 @@ class TestMetaExtraction:
         )
 
         # Check that we have data
-        assert not school_year_meta.empty
-        assert not enroll_df.empty
-        assert not levels_df.empty
+        assert isinstance(school_year_meta, pl.DataFrame)
+        assert isinstance(enroll_df, pl.DataFrame)
+        assert isinstance(levels_df, pl.DataFrame)
+
+        assert school_year_meta.height > 0
+        assert enroll_df.height > 0
+        assert levels_df.height > 0
 
         # Check expected columns in enroll_df
         expected_enroll_cols = [
@@ -83,4 +91,4 @@ class TestMetaExtraction:
         assert all(col in enroll_df.columns for col in expected_enroll_cols)
 
         # Check that school_year is correctly extracted
-        assert enroll_df["school_year"].iloc[0] == "2023-2024"
+        assert enroll_df["school_year"][0] == "2023-2024"

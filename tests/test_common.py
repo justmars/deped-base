@@ -1,4 +1,4 @@
-import pandas as pd
+import polars as pl
 import pytest
 from sqlite_utils import Database
 
@@ -40,77 +40,86 @@ class TestCommonFunctions:
         db_path = tmp_path / "test.db"
         db = Database(db_path)
 
-        values = [
-            {"id": 1, "label": "Test 1"},
-            {"id": 2, "label": "Test 2"},
-        ]
+        try:
+            values = [
+                {"id": 1, "label": "Test 1"},
+                {"id": 2, "label": "Test 2"},
+            ]
 
-        prep_table(db, "test_table", values)
+            prep_table(db, "test_table", values)
 
-        # Check table was created and populated
-        assert db["test_table"].exists()
-        rows = list(db["test_table"].rows)
-        assert len(rows) == 2
-        assert rows[0]["label"] == "Test 1"
+            # Check table was created and populated
+            assert db["test_table"].exists()
+            rows = list(db["test_table"].rows)
+            assert len(rows) == 2
+            assert rows[0]["label"] == "Test 1"
+        finally:
+            db.conn.close()
 
     def test_add_to(self, tmp_path):
         """Test adding dataframe to database."""
         db_path = tmp_path / "test.db"
         db = Database(db_path)
 
-        df = pd.DataFrame(
-            {
-                "id": [1, 2, 3],
-                "name": ["Alice", "Bob", "Charlie"],
-                "value": [10, 20, 30],
-            }
-        )
+        try:
+            df = pl.DataFrame(
+                {
+                    "id": [1, 2, 3],
+                    "name": ["Alice", "Bob", "Charlie"],
+                    "value": [10, 20, 30],
+                }
+            )
 
-        result_db = add_to(db, df, "test_table")
+            result_db = add_to(db, df, "test_table")
 
-        assert result_db["test_table"].exists()
-        rows = list(result_db["test_table"].rows)
-        assert len(rows) == 3
-        assert rows[1]["name"] == "Bob"
+            assert result_db["test_table"].exists()
+            rows = list(result_db["test_table"].rows)
+            assert len(rows) == 3
+            assert rows[1]["name"] == "Bob"
+        finally:
+            db.conn.close()
 
     def test_bulk_update(self, tmp_path):
         """Test bulk update with foreign keys."""
         db_path = tmp_path / "test.db"
         db = Database(db_path)
 
-        # Create dependency table
-        db["categories"].insert_all(
-            [
-                {"id": 1, "label": "Category A"},
-                {"id": 2, "label": "Category B"},
-            ],
-            pk="id",
-        )
+        try:
+            # Create dependency table
+            db["categories"].insert_all(
+                [
+                    {"id": 1, "label": "Category A"},
+                    {"id": 2, "label": "Category B"},
+                ],
+                pk="id",
+            )
 
-        # Create main table
-        db["items"].insert_all(
-            [
-                {"id": 1, "name": "Item 1", "category": "Category A"},
-                {"id": 2, "name": "Item 2", "category": "Category B"},
-                {"id": 3, "name": "Item 3", "category": "Category A"},
-            ],
-            pk="id",
-        )
+            # Create main table
+            db["items"].insert_all(
+                [
+                    {"id": 1, "name": "Item 1", "category": "Category A"},
+                    {"id": 2, "name": "Item 2", "category": "Category B"},
+                    {"id": 3, "name": "Item 3", "category": "Category A"},
+                ],
+                pk="id",
+            )
 
-        # Perform bulk update
-        bulk_update(
-            db=db,
-            tbl_name="items",
-            target_col="category",
-            dependency_tbl="categories",
-            fk_col="category_id",
-        )
+            # Perform bulk update
+            bulk_update(
+                db=db,
+                tbl_name="items",
+                target_col="category",
+                dependency_tbl="categories",
+                fk_col="category_id",
+            )
 
-        # Check results
-        rows = list(db["items"].rows)
-        assert rows[0]["category_id"] == "1"  # sqlite returns strings
-        assert rows[1]["category_id"] == "2"
+            # Check results
+            rows = list(db["items"].rows)
+            assert rows[0]["category_id"] == "1"  # sqlite returns strings
+            assert rows[1]["category_id"] == "2"
 
-        # Check foreign key was added
-        assert "category_id" in db["items"].columns_dict
-        # Note: sqlite-utils foreign key checking might not be directly testable here
+            # Check foreign key was added
+            assert "category_id" in db["items"].columns_dict
+            # Note: sqlite-utils foreign key checking might not be directly testable here
+        finally:
+            db.conn.close()

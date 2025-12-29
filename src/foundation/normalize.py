@@ -1,25 +1,23 @@
 import re
 
-import pandas as pd
+import polars as pl
 
 
 def _digits_only(s: str) -> str:
     """Return only the digits from the string, or '' if NA."""
-    if pd.isna(s):
+    if s is None:
         return ""
     return re.sub(r"\D", "", str(s))
 
 
-def get_unique_regions(df: pd.DataFrame):
-    _df = df[["psgc_region_id", "region"]].drop_duplicates(
-        subset=["psgc_region_id", "region"]
-    )
-    _df.columns = ["id", "name"]
-    _df.sort_values(by="id")
+def get_unique_regions(df: pl.DataFrame):
+    _df = df.select(["psgc_region_id", "region"]).unique()
+    _df = _df.rename({"psgc_region_id": "id", "region": "name"})
+    _df = _df.sort("id")
     return _df
 
 
-def get_unique_provinces(df: pd.DataFrame, psgc_df: pd.DataFrame) -> pd.DataFrame:
+def get_unique_provinces(df: pl.DataFrame, psgc_df: pl.DataFrame) -> pl.DataFrame:
     """
     Extract unique provinces from df['psgc_provhuc_id'], canonicalize them
     to the first 5 digits, match to PSGC masterlist where geo == 'Prov',
@@ -34,51 +32,50 @@ def get_unique_provinces(df: pd.DataFrame, psgc_df: pd.DataFrame) -> pd.DataFram
 
     # --- 1) Clean school dataframe province IDs ---
     prov_series = (
-        df["psgc_provhuc_id"]
-        .astype("string")
-        .replace(["", "None", "nan"], pd.NA)
-        .dropna()
-        .map(_digits_only)
+        df.select("psgc_provhuc_id")
+        .to_series()
+        .cast(pl.Utf8)
+        .map_elements(_digits_only, return_dtype=pl.Utf8)
     )
-    prov_series = prov_series[prov_series.str.len() > 0].unique().tolist()
-    prov_df = pd.DataFrame({"raw_provhuc_id": prov_series})
+    prov_series = prov_series.filter(prov_series.str.lengths() > 0).unique()
+    prov_df = pl.DataFrame({"raw_provhuc_id": prov_series})
 
     # Canonical 5-digit province code
-    prov_df["prov_key"] = prov_df["raw_provhuc_id"].str[:5]
+    prov_df = prov_df.with_columns(prov_key=pl.col("raw_provhuc_id").str.slice(0, 5))
 
     # --- 2) Prepare PSGC province layer ---
-    psgc_prov = psgc_df[psgc_df["geo"] == "Prov"].copy()
-    psgc_prov["id"] = psgc_prov["id"].astype("string").map(_digits_only)
-    psgc_prov["prov_key"] = psgc_prov["id"].str[:5]
-    psgc_prov = psgc_prov[["prov_key", "id", "name"]].drop_duplicates("prov_key")
+    psgc_prov = psgc_df.filter(pl.col("geo") == "Prov").with_columns(
+        id=pl.col("id").cast(pl.Utf8).map_elements(_digits_only, return_dtype=pl.Utf8)
+    )
+    psgc_prov = psgc_prov.with_columns(prov_key=pl.col("id").str.slice(0, 5))
+    psgc_prov = psgc_prov.select(["prov_key", "id", "name"]).unique(subset=["prov_key"])
 
     # --- 3) Prepare PSGC region layer (for region mapping) ---
-    psgc_reg = psgc_df[psgc_df["geo"] == "Reg"].copy()
-    psgc_reg["id"] = psgc_reg["id"].astype("string").map(_digits_only)
-    psgc_reg["reg_key"] = psgc_reg["id"].str[:2]  # Regions map via 2-digit code
-    psgc_reg = psgc_reg[["reg_key", "id"]].rename(columns={"id": "region_id"})
+    psgc_reg = psgc_df.filter(pl.col("geo") == "Reg").with_columns(
+        id=pl.col("id").cast(pl.Utf8).map_elements(_digits_only, return_dtype=pl.Utf8)
+    )
+    psgc_reg = psgc_reg.with_columns(
+        reg_key=pl.col("id").str.slice(0, 2)  # Regions map via 2-digit code
+    )
+    psgc_reg = psgc_reg.select(["reg_key", "id"]).rename({"id": "region_id"})
 
     # --- 4) Merge school province list → PSGC provinces ---
-    merged = prov_df.merge(psgc_prov, how="left", on="prov_key", validate="m:1")
+    merged = prov_df.join(psgc_prov, on="prov_key", how="left")
 
     # Remove unmatched provinces
-    merged = merged.dropna(subset=["id"])
+    merged = merged.filter(pl.col("id").is_not_null())
 
     # --- 5) Add region_code based on province PSGC code prefix ---
-    merged["reg_key"] = merged["id"].str[:2]
-    merged = merged.merge(psgc_reg, on="reg_key", how="left", validate="m:1")
+    merged = merged.with_columns(reg_key=pl.col("id").str.slice(0, 2))
+    merged = merged.join(psgc_reg, on="reg_key", how="left")
 
     # --- 6) Final cleanup ---
-    final = (
-        merged[["id", "name", "region_id"]]
-        .drop_duplicates(subset=["id"])
-        .reset_index(drop=True)
-    )
+    final = merged.select(["id", "name", "region_id"]).unique(subset=["id"])
 
     return final
 
 
-def get_divisions(df: pd.DataFrame):
+def get_divisions(df: pl.DataFrame):
     """Generate a unique division lookup table from a PSGC-aligned dataframe.
 
     This function extracts unique (region, division) pairs from the input
@@ -92,12 +89,12 @@ def get_divisions(df: pd.DataFrame):
     their division IDs will be: `01-1`, `01-2`, `01-3`.
 
     Args:
-        df (pd.DataFrame): A dataframe containing at least the columns
+        df (pl.DataFrame): A dataframe containing at least the columns
             `psgc_region_id` (region code) and `division`
             (DepEd division name).
 
     Returns:
-        pd.DataFrame: A dataframe with one row per unique division containing:
+        pl.DataFrame: A dataframe with one row per unique division containing:
             - psgc_region_id (str or int): PSGC region code.
             - division (str): Division name.
             - division_seq (int): Sequential index of the division within
@@ -112,14 +109,21 @@ def get_divisions(df: pd.DataFrame):
 
     """
     div = (
-        df[["psgc_region_id", "division"]]
-        .drop_duplicates()
-        .sort_values(["psgc_region_id", "division"])
-        .reset_index(drop=True)
+        df.select(["psgc_region_id", "division"])
+        .unique()
+        .sort(["psgc_region_id", "division"])
     )
-    div["division_seq"] = div.groupby("psgc_region_id").cumcount() + 1
+    div = div.with_columns(
+        division_seq=pl.col("psgc_region_id").cum_count().over("psgc_region_id") + 1
+    )
 
-    div["division_id"] = (
-        div["psgc_region_id"].astype(str) + "-" + div["division_seq"].astype(str)
+    div = div.with_columns(
+        division_id=pl.concat_str(
+            [
+                pl.col("psgc_region_id").cast(pl.Utf8),
+                pl.col("division_seq").cast(pl.Utf8),
+            ],
+            separator="-",
+        )
     )
     return div

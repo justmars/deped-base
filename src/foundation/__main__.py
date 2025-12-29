@@ -60,7 +60,7 @@ def build():
     # the school years table will be created based on the enroll dataframe
     db = add_to(
         db=db,
-        df=enroll_df[["school_year"]].drop_duplicates().dropna(subset=["school_year"]),
+        df=enroll_df[["school_year"]].unique().drop_nulls(subset=["school_year"]),
         table_name="school_years",
     )
     db = add_to(db=db, df=levels_df, table_name="school_levels")

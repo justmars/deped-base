@@ -47,11 +47,12 @@ def set_psgc(f: Path) -> pl.DataFrame:
         .alias("name")
     )
 
-    # Replace "-" with null
+    # Replace "-" with null (only on string columns)
+    string_cols = [col for col in df.columns if df[col].dtype == pl.Utf8]
     df = df.with_columns(
         [
             pl.when(pl.col(col) == "-").then(None).otherwise(pl.col(col)).alias(col)
-            for col in df.columns
+            for col in string_cols
         ]
     )
 
@@ -60,7 +61,7 @@ def set_psgc(f: Path) -> pl.DataFrame:
         pl.col("income_class")
         .fill_null("")
         .cast(pl.Utf8)
-        .str.replace_all("*", "")
+        .str.replace_all(r"\*", "")
         .alias("income_class")
     )
 

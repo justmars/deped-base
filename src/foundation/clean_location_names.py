@@ -1,6 +1,6 @@
 from pathlib import Path
 
-import pandas as pd
+import polars as pl
 
 from .common import FIXES
 
@@ -8,18 +8,18 @@ from .common import FIXES
 # ========================================================
 # YAML-DRIVEN CLEANER (clean + optimized)
 # ========================================================
-def clean_meta_location_names(meta: pd.DataFrame) -> pd.DataFrame:
+def clean_meta_location_names(meta: pl.DataFrame) -> pl.DataFrame:
     """
     Clean incorrect municipality, province, and region names
     fully driven by YAML configurations.
     """
 
-    meta = meta.copy()
+    meta = meta.clone()
 
-    # Normalized lowercase helpers
-    prov_series = meta["province"].astype(str).str.strip().str.lower()
-    muni_series = meta["municipality"].astype(str).str.strip().str.lower()
-    school_ids = meta["school_id"].astype(int)
+    # Normalized lowercase helpers using Polars expressions
+    prov_series = meta["province"].str.to_lowercase().str.strip_chars()
+    muni_series = meta["municipality"].str.to_lowercase().str.strip_chars()
+    school_ids = meta["school_id"]
 
     # =====================================================
     # 1. Provincial-level municipality corrections
@@ -30,9 +30,14 @@ def clean_meta_location_names(meta: pd.DataFrame) -> pd.DataFrame:
         corrected = rule["corrected"]
 
         mask = (prov_series == province_raw) & (muni_series == muni_raw)
-        meta.loc[mask, "municipality"] = corrected
+        meta = meta.with_columns(
+            pl.when(mask)
+            .then(pl.lit(corrected))
+            .otherwise(pl.col("municipality"))
+            .alias("municipality")
+        )
 
-    muni_series = meta["municipality"].astype(str).str.strip().str.lower()
+    muni_series = meta["municipality"].str.to_lowercase().str.strip_chars()
 
     # =====================================================
     # 2. Municipality-only corrections
@@ -40,33 +45,44 @@ def clean_meta_location_names(meta: pd.DataFrame) -> pd.DataFrame:
     for raw, corrected in FIXES.get("municipality_fixes", {}).items():
         raw_norm = raw.lower()
         mask = muni_series == raw_norm
-        meta.loc[mask, "municipality"] = corrected
+        meta = meta.with_columns(
+            pl.when(mask)
+            .then(pl.lit(corrected))
+            .otherwise(pl.col("municipality"))
+            .alias("municipality")
+        )
 
-    muni_series = meta["municipality"].astype(str).str.strip().str.lower()
+    muni_series = meta["municipality"].str.to_lowercase().str.strip_chars()
 
     # =====================================================
     # 3. Province fixes by school ID
     # =====================================================
     for province_name, id_list in FIXES.get("province_fixes_by_school_id", {}).items():
-        mask = school_ids.isin(id_list)
-        meta.loc[mask, "province"] = province_name.upper()
+        mask = school_ids.is_in(id_list)
+        meta = meta.with_columns(
+            pl.when(mask)
+            .then(pl.lit(province_name.upper()))
+            .otherwise(pl.col("province"))
+            .alias("province")
+        )
 
-    prov_series = meta["province"].astype(str).str.strip().str.lower()
+    prov_series = meta["province"].str.to_lowercase().str.strip_chars()
 
     # =====================================================
     # 4. Region overrides
     # =====================================================
     for rule in FIXES.get("special_fixes", []):
-        cond = pd.Series(True, index=meta.index)
-
-        # Build `when` condition
+        # Build condition from "when" dict
+        mask = pl.lit(True)
         for col, val in rule["when"].items():
-            series = meta[col].astype(str).str.strip().str.lower()
-            cond &= series == val.lower()
+            col_series = meta[col].str.to_lowercase().str.strip_chars()
+            mask = mask & (col_series == val.lower())
 
-        # Apply `set` updates
+        # Apply updates from "set" dict
         for col, val in rule["set"].items():
-            meta.loc[cond, col] = val
+            meta = meta.with_columns(
+                pl.when(mask).then(pl.lit(val)).otherwise(pl.col(col)).alias(col)
+            )
 
     # =====================================================
     # 5. NIR assignment
@@ -75,8 +91,14 @@ def clean_meta_location_names(meta: pd.DataFrame) -> pd.DataFrame:
     nir_provinces = {x.lower() for x in nir.get("provinces", [])}
     nir_region = nir.get("set_region", "NIR")
 
-    mask_nir = prov_series.isin(nir_provinces)
-    meta.loc[mask_nir, "region"] = nir_region
+    prov_series = meta["province"].str.to_lowercase().str.strip_chars()
+    mask_nir = prov_series.is_in(list(nir_provinces))
+    meta = meta.with_columns(
+        pl.when(mask_nir)
+        .then(pl.lit(nir_region))
+        .otherwise(pl.col("region"))
+        .alias("region")
+    )
 
     # =====================================================
     # 6. Maguindanao split
@@ -86,15 +108,31 @@ def clean_meta_location_names(meta: pd.DataFrame) -> pd.DataFrame:
     norte_munis = {m.lower() for m in split_cfg.get("norte_municipalities", [])}
     sur_is_default = split_cfg.get("sur_is_default", True)
 
+    prov_series = meta["province"].str.to_lowercase().str.strip_chars()
+    muni_series = meta["municipality"].str.to_lowercase().str.strip_chars()
+
     is_maguindanao = prov_series == "maguindanao"
 
     # Norte
-    mask_norte = is_maguindanao & muni_series.isin(norte_munis)
-    meta.loc[mask_norte, "province"] = "Maguindanao del Norte"
+    mask_norte = is_maguindanao & muni_series.is_in(list(norte_munis))
+    meta = meta.with_columns(
+        pl.when(mask_norte)
+        .then(pl.lit("Maguindanao del Norte"))
+        .otherwise(pl.col("province"))
+        .alias("province")
+    )
 
     # Sur = remaining
     if sur_is_default:
-        mask_sur = is_maguindanao & ~muni_series.isin(norte_munis)
-        meta.loc[mask_sur, "province"] = "Maguindanao del Sur"
+        prov_series = meta["province"].str.to_lowercase().str.strip_chars()
+        muni_series = meta["municipality"].str.to_lowercase().str.strip_chars()
+        is_maguindanao = prov_series == "maguindanao"
+        mask_sur = is_maguindanao & ~muni_series.is_in(list(norte_munis))
+        meta = meta.with_columns(
+            pl.when(mask_sur)
+            .then(pl.lit("Maguindanao del Sur"))
+            .otherwise(pl.col("province"))
+            .alias("province")
+        )
 
     return meta

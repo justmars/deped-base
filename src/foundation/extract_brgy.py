@@ -1,29 +1,29 @@
-import pandas as pd
+import polars as pl
 from rich import print as rprint
 
 from .common import FIXES, convert_trailing_roman, normalize_geo_name
 
 
 def fix_barangay_enye_value(barangay):
-    if pd.isna(barangay):
+    if barangay is None:
         return barangay
     return barangay.replace("Ã‘", "Ñ")
 
 
-def apply_barangay_corrections(meta: pd.DataFrame, psgc: pd.DataFrame) -> pd.DataFrame:
+def apply_barangay_corrections(meta: pl.DataFrame, psgc: pl.DataFrame) -> pl.DataFrame:
     """
     Apply barangay name corrections based on CORRECTIONS,
     then look up the correct PSGC barangay code from psgc_df.
     """
 
     # Make a copy to avoid modifying original df unexpectedly
-    df = meta.copy()
+    df = meta.clone()
 
     rules = FIXES["barangay_corrections"]
 
     # Ensure psgc_brgy_id column exists
     if "psgc_brgy_id" not in df.columns:
-        df["psgc_brgy_id"] = None
+        df = df.with_columns(psgc_brgy_id=pl.lit(None, dtype=pl.Utf8))
 
     for rule in rules:
         muni_code = rule["psgc_muni_id"]
@@ -33,32 +33,45 @@ def apply_barangay_corrections(meta: pd.DataFrame, psgc: pd.DataFrame) -> pd.Dat
         # Compute first 7 digits of the municipality ID
         muni_prefix = muni_code[:7]
 
-        # Mask rows that need correction
+        # Filter rows that need correction
         mask = (
-            df["psgc_brgy_id"].isna()
-            & (df["psgc_muni_id"] == muni_code)
-            & (df["barangay"].str.upper() == old_name.upper())
+            (pl.col("psgc_brgy_id").is_null())
+            & (pl.col("psgc_muni_id") == muni_code)
+            & (pl.col("barangay").str.to_uppercase() == old_name.upper())
         )
 
-        if mask.any():
+        # Check if any rows match
+        matching = df.filter(mask)
+        if matching.height > 0:
             # Apply the updated barangay name
-            df.loc[mask, "barangay"] = new_name
+            df = df.with_columns(
+                pl.when(mask)
+                .then(pl.lit(new_name))
+                .otherwise(pl.col("barangay"))
+                .alias("barangay")
+            )
 
             # --- PSGC lookup ---
-            matched = psgc[
-                (psgc["id"].str.startswith(muni_prefix))
-                & (psgc["geo"] == "Bgy")
-                & (psgc["name"].str.upper() == new_name.upper())
-            ]
+            matched = psgc.filter(
+                (pl.col("id").str.starts_with(muni_prefix))
+                & (pl.col("geo") == "Bgy")
+                & (pl.col("name").str.to_uppercase() == new_name.upper())
+            )
 
-            if not matched.empty:
+            if matched.height > 0:
                 # Assign the PSGC barangay ID
-                df.loc[mask, "psgc_brgy_id"] = matched.iloc[0]["id"]
+                matched_id = matched.row(0)[matched.columns.index("id")]
+                df = df.with_columns(
+                    pl.when(mask)
+                    .then(pl.lit(matched_id))
+                    .otherwise(pl.col("psgc_brgy_id"))
+                    .alias("psgc_brgy_id")
+                )
 
     return df
 
 
-def attach_psgc_brgy_id(meta: pd.DataFrame, psgc: pd.DataFrame) -> pd.DataFrame:
+def attach_psgc_brgy_id(meta: pl.DataFrame, psgc: pl.DataFrame) -> pl.DataFrame:
     """
     Attach PSGC barangay-level codes to schools.
     Requires that psgc_muni_id is already assigned by attach_psgc_muni_id().
@@ -67,58 +80,66 @@ def attach_psgc_brgy_id(meta: pd.DataFrame, psgc: pd.DataFrame) -> pd.DataFrame:
         raise Exception("Missing dependency.")
     rprint("[cyan]Attaching PSGC barangay codes...[/cyan]")
 
-    df = meta.copy()
+    df = meta.clone()
 
     # ---------------------------------------------------------
     # 1. Prepare barangay-level PSGC (geo == 'Bgy')
     # ---------------------------------------------------------
-    psgc_bgy = psgc[psgc["geo"] == "Bgy"].copy()
-    psgc_bgy["normalized_name"] = (
-        psgc_bgy["name"].apply(normalize_geo_name).apply(convert_trailing_roman)
+    psgc_bgy = psgc.filter(pl.col("geo") == "Bgy").with_columns(
+        normalized_name=pl.col("name").map_elements(
+            lambda x: convert_trailing_roman(normalize_geo_name(x)),
+            return_dtype=pl.Utf8,
+        ),
+        mun_prefix=pl.col("id").cast(pl.Utf8).str.slice(0, 7),
     )
-    psgc_bgy["mun_prefix"] = psgc_bgy["id"].str[:7]  # municipality-level PSGC prefix
 
     # ---------------------------------------------------------
     # 2. Normalize school barangay names
     # ---------------------------------------------------------
-    df["normalized_brgy"] = (
-        df["barangay"]
-        .apply(fix_barangay_enye_value)
-        .apply(normalize_geo_name)
-        .apply(convert_trailing_roman)
+    df = df.with_columns(
+        normalized_brgy=pl.col("barangay").map_elements(
+            lambda x: convert_trailing_roman(
+                normalize_geo_name(fix_barangay_enye_value(x))
+            )
+            if x is not None
+            else None,
+            return_dtype=pl.Utf8,
+        )
     )
 
     # ---------------------------------------------------------
     # 3. Extract municipality prefix from assigned psgc_muni_id
     # ---------------------------------------------------------
-    df["mun_prefix"] = df["psgc_muni_id"].astype(str).str[:7]
+    df = df.with_columns(
+        mun_prefix=pl.col("psgc_muni_id").cast(pl.Utf8).str.slice(0, 7)
+    )
 
     # ---------------------------------------------------------
-    # 4. Merge on (mun_prefix + normalized barangay name)
+    # 4. Join on (mun_prefix + normalized barangay name)
     # ---------------------------------------------------------
-    merged = df.merge(
-        psgc_bgy[["normalized_name", "mun_prefix", "id"]],
-        how="left",
+    merged = df.join(
+        psgc_bgy.select(["normalized_name", "mun_prefix", "id"]),
         left_on=["mun_prefix", "normalized_brgy"],
         right_on=["mun_prefix", "normalized_name"],
+        how="left",
     )
 
     # ---------------------------------------------------------
     # 5. Assign PSGC barangay code
     # ---------------------------------------------------------
-    merged = merged.rename(columns={"id": "psgc_brgy_id"})
+    merged = merged.rename({"id": "psgc_brgy_id"})
 
     # ---------------------------------------------------------
     # 6. Cleanup temporary columns
     # ---------------------------------------------------------
     merged = merged.drop(
-        columns=[
+        [
             "normalized_brgy",
             "normalized_municipality",
             "normalized_name",
             "mun_prefix",
         ],
-        errors="ignore",
+        strict=False,
     )
 
     return merged

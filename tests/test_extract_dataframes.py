@@ -1,4 +1,4 @@
-import pandas as pd
+import polars as pl
 
 from src.foundation.extract_dataframes import extract_dataframes
 
@@ -12,11 +12,18 @@ class TestDataFrameExtraction:
         psgc_df, enroll_df, geo_df, levels_df, addr_df = extract_dataframes()
 
         # Check that all dataframes are returned
-        assert not psgc_df.empty
-        assert not enroll_df.empty
-        assert not geo_df.empty
-        assert not levels_df.empty
-        assert not addr_df.empty
+        assert isinstance(psgc_df, pl.DataFrame)
+        assert isinstance(enroll_df, pl.DataFrame)
+        assert isinstance(geo_df, pl.DataFrame)
+        assert isinstance(levels_df, pl.DataFrame)
+        assert isinstance(addr_df, pl.DataFrame)
+
+        # Check that they have rows
+        assert psgc_df.height > 0
+        assert enroll_df.height > 0
+        assert geo_df.height > 0
+        assert levels_df.height > 0
+        assert addr_df.height > 0
 
         # Check expected columns
         assert "id" in psgc_df.columns

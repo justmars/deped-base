@@ -1,8 +1,8 @@
-import pandas as pd
+import polars as pl
 from rich import print as rprint
 
 
-def reorganize_school_geo_df(df: pd.DataFrame) -> pd.DataFrame:
+def reorganize_school_geo_df(df: pl.DataFrame) -> pl.DataFrame:
     """
     Reorganize columns into a clean hierarchical structure:
 
@@ -18,13 +18,11 @@ def reorganize_school_geo_df(df: pd.DataFrame) -> pd.DataFrame:
     """
     rprint("[cyan]Reordering dataframe columns...[/cyan]")
 
-    df = df.copy()
-
     # --- ensure PSGC fields are strings ---
     psgc_cols = ["psgc_region_id", "psgc_provhuc_id", "psgc_muni_id", "psgc_brgy_id"]
-    for col in psgc_cols:
-        if col in df.columns:
-            df[col] = df[col].astype("string")
+    cast_exprs = [pl.col(col).cast(pl.Utf8) for col in psgc_cols if col in df.columns]
+    if cast_exprs:
+        df = df.with_columns(cast_exprs)
 
     # --- define column groups ---
     school_identifiers = ["school_id", "school_name"]
@@ -51,6 +49,6 @@ def reorganize_school_geo_df(df: pd.DataFrame) -> pd.DataFrame:
     ordered_columns = ordered_columns + remaining
 
     # --- reorder the dataframe ---
-    df = df[ordered_columns]
+    df = df.select(ordered_columns)
 
     return df

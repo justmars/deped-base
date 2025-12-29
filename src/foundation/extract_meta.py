@@ -1,8 +1,7 @@
 import re
 from pathlib import Path
 
-import numpy as np
-import pandas as pd
+import polars as pl
 from rich import print as rprint
 
 from .clean_location_names import clean_meta_location_names
@@ -70,64 +69,75 @@ def extract_school_year(file_name: str) -> str:
     return match.group(1)
 
 
-def extract_grade_sex_columns(df: pd.DataFrame, id_vars: list[str]) -> list[str]:
+def extract_grade_sex_columns(df: pl.DataFrame, id_vars: list[str]) -> list[str]:
     """Identify all enrollment columns (exclude meta & school year)."""
     return [col for col in df.columns if col not in id_vars]
 
 
-def split_grade_strand_sex(col_series: pd.Series) -> pd.DataFrame:
+def split_grade_strand_sex(col_series: pl.Series) -> pl.DataFrame:
+    """Parse grade_sex column using Polars with multi-branch logic."""
     CUSTOM = {"sshs_acad", "sshs_techpro"}
 
-    # Split into wide columns
-    parts = col_series.str.split("_", expand=True)
+    # Count parts per row using map_elements
+    def count_parts(x):
+        return len(x) if x is not None else 0
 
-    # Count number of actual tokens per row
-    n = parts.notna().sum(axis=1)
+    def parse_row(grade_sex_str):
+        """Parse a single grade_sex string into (grade, strand, sex)."""
+        if not grade_sex_str:
+            return (None, None, None)
 
-    out = pd.DataFrame(index=col_series.index)
-    out["grade"] = parts[0]
+        parts_list = grade_sex_str.split("_")
+        n = len(parts_list)
 
-    # ---- Branch A: custom strands (exactly 3 parts AND middle matches custom) ----
-    mask_custom = (n == 3) & (parts[1].isin(CUSTOM))
-    out.loc[mask_custom, "strand"] = parts.loc[mask_custom, 1]
-    out.loc[mask_custom, "sex"] = parts.loc[mask_custom, 2]
+        # ---- Branch A: custom strands (exactly 3 parts AND middle matches custom) ----
+        if n == 3 and parts_list[1] in CUSTOM:
+            return (parts_list[0], parts_list[1], parts_list[2])
 
-    # ---- Branch B: 2 part format → grade + sex ----
-    mask_two = n == 2
-    out.loc[mask_two, "strand"] = pd.NA
-    out.loc[mask_two, "sex"] = parts.loc[mask_two, 1]
+        # ---- Branch B: 2 part format → grade + sex ----
+        if n == 2:
+            return (parts_list[0], None, parts_list[1])
 
-    # ---- Branch C: standard old 3-part format ----
-    mask_standard3 = (n == 3) & ~mask_custom
-    out.loc[mask_standard3, "strand"] = parts.loc[mask_standard3, 1]
-    out.loc[mask_standard3, "sex"] = parts.loc[mask_standard3, 2]
+        # ---- Branch C: standard old 3-part format ----
+        if n == 3:
+            return (parts_list[0], parts_list[1], parts_list[2])
 
-    # ---- Branch D: Fallback for >3 parts ----
-    mask_fallback = n > 3
-    if mask_fallback.any():
-        middle = (
-            parts.loc[mask_fallback]
-            .iloc[:, 1:-1]
-            .apply(lambda row: "_".join(row.dropna().astype(str)), axis=1)
-        )
-        out.loc[mask_fallback, "strand"] = middle
-        out.loc[mask_fallback, "sex"] = parts.loc[mask_fallback].iloc[:, -1]
+        # ---- Branch D: Fallback for >3 parts ----
+        if n > 3:
+            strand = "_".join(parts_list[1:-1])
+            return (parts_list[0], strand, parts_list[-1])
 
-    return out
+        return (parts_list[0], None, None)
+
+    # Map the parsing function to get tuples
+    parsed = col_series.map_elements(parse_row, return_dtype=pl.Object)
+
+    # Extract individual components
+    grade = parsed.map_elements(lambda x: x[0] if x else None, return_dtype=pl.Utf8)
+    strand = parsed.map_elements(lambda x: x[1] if x else None, return_dtype=pl.Utf8)
+    sex = parsed.map_elements(lambda x: x[2] if x else None, return_dtype=pl.Utf8)
+
+    return pl.DataFrame(
+        {
+            "grade": grade,
+            "strand": strand,
+            "sex": sex,
+        }
+    )
 
 
 # -----------------------------------------
 # 3. Transform single file
 # -----------------------------------------
-def load_and_melt_file(path: Path) -> pd.DataFrame:
+def load_and_melt_file(path: Path) -> pl.DataFrame:
     """Load a single CSV of enrollment counts and melt it to long format."""
     school_year = extract_school_year(path.name)
     rprint(f"[green]Processing file:[/green] {path.name}")
 
-    df = pd.read_csv(path)
+    df = pl.read_csv(path)
 
     # Add school_year column
-    df["school_year"] = school_year
+    df = df.with_columns(pl.lit(school_year).alias("school_year"))
 
     # Id vars = school year + metadata
     id_vars = ["school_year"] + META_COLS + OFFER_COLS
@@ -136,19 +146,23 @@ def load_and_melt_file(path: Path) -> pd.DataFrame:
     value_cols = extract_grade_sex_columns(df, id_vars=id_vars)
 
     rprint("[cyan]Melting wide enrollment columns → long...[/cyan]")
-    melted = df.melt(
-        id_vars=id_vars,
-        value_vars=value_cols,
-        var_name="grade_sex",
+    melted = df.unpivot(
+        index=id_vars,
+        on=value_cols,
+        variable_name="grade_sex",
         value_name="num_students",
     )
 
     # Drop empty / zero entries early
-    melted = melted[(melted["num_students"].notna()) & (melted["num_students"] != 0)]
+    melted = melted.filter(
+        (pl.col("num_students").is_not_null()) & (pl.col("num_students") != 0)
+    )
 
     # Split grade/strand/sex
     split_df = split_grade_strand_sex(melted["grade_sex"])
-    melted = pd.concat([melted, split_df], axis=1)
+    melted = melted.with_columns(split_df.to_struct().alias("__split")).unnest(
+        "__split"
+    )
 
     return melted
 
@@ -158,7 +172,7 @@ def load_and_melt_file(path: Path) -> pd.DataFrame:
 # -----------------------------------------
 def process_enrollment_folder(
     folder_path: Path, test_only: bool = False
-) -> pd.DataFrame:
+) -> pl.DataFrame:
     """Load all CSV files under a folder and output one unified long-form dataframe."""
     folder = Path(folder_path)
     if not folder.exists():
@@ -172,43 +186,52 @@ def process_enrollment_folder(
     if not files:
         raise ValueError("No CSV files found in folder.")
 
-    all_dfs = (load_and_melt_file(path) for path in files)
+    all_dfs = [load_and_melt_file(path) for path in files]
 
     rprint("[blue]Combining all dataframes...[/blue]")
-    df_long = pd.concat(all_dfs, ignore_index=True)
+    df_long = pl.concat(all_dfs, how="diagonal")
 
     for col in COLS_TO_CLEAN:
-        df_long[col] = df_long[col].str.replace(r"\s+", " ", regex=True).str.strip()
+        df_long = df_long.with_columns(
+            pl.col(col).str.replace_all(r"\s+", " ").str.strip_chars().alias(col)
+        )
 
     # Clean annex status field
-    df_long["annex_status"] = df_long["annex_status"].str.strip().str.lower()
+    df_long = df_long.with_columns(
+        pl.col("annex_status")
+        .str.strip_chars()
+        .str.to_lowercase()
+        .alias("annex_status")
+    )
 
     # Clean street addresses
-    df_long["street_address"] = (
-        df_long["street_address"]
-        .str.lower()
-        .str.removeprefix("-")
-        .str.removesuffix("-")
-        .replace(
-            to_replace=r"^(not applicable|na|null|none|-|0|n\*/\s*a)$",
-            value=np.nan,
-            regex=True,
+    df_long = df_long.with_columns(
+        pl.col("street_address")
+        .str.to_lowercase()
+        .str.strip_chars_start("-")
+        .str.strip_chars_end("-")
+        .map_elements(
+            lambda x: None
+            if x and re.match(r"^(not applicable|na|null|none|-|0|n\*/\s*a)$", x)
+            else x,
+            return_dtype=pl.Utf8,
         )
-        .str.title()
+        .str.to_titlecase()
+        .alias("street_address")
     )
 
     # Ensure numeric
-    df_long["num_students"] = pd.to_numeric(
-        df_long["num_students"], errors="coerce"
-    ).astype("Int64")
+    df_long = df_long.with_columns(
+        pl.col("num_students").cast(pl.Float64).cast(pl.Int64).alias("num_students")
+    )
 
     return df_long
 
 
 def build_school_year_offered_levels(
-    cleaned_meta: pd.DataFrame,
-    enroll: pd.DataFrame,
-) -> tuple[pd.DataFrame, pd.DataFrame]:
+    cleaned_meta: pl.DataFrame,
+    enroll: pl.DataFrame,
+) -> tuple[pl.DataFrame, pl.DataFrame]:
     """
     Creates a long-format dataframe containing offered levels (ES/JHS/SHS)
     per school_id per school_year, based on metadata + enrollment years.
@@ -222,37 +245,35 @@ def build_school_year_offered_levels(
     OFFER_COLS = ["offers_es", "offers_jhs", "offers_shs"]
 
     # 1. Extract offer columns
-    offerings = cleaned_meta[["school_id"] + OFFER_COLS].copy()
+    offerings = cleaned_meta.select(["school_id"] + OFFER_COLS)
 
     # 2. Get unique school/year pairs seen in enrollment
     school_years = (
-        enroll[["school_id", "school_year"]]
-        .drop_duplicates()
-        .merge(offerings, on="school_id", how="left")
+        enroll.select(["school_id", "school_year"])
+        .unique()
+        .join(offerings, on="school_id", how="left")
     )
 
     # 3. Convert to long format (offers_es → level=ES)
-    school_year_offered_levels = school_years.melt(
-        id_vars=["school_id", "school_year"],
-        value_vars=OFFER_COLS,
-        var_name="level",
+    school_year_offered_levels = school_years.unpivot(
+        index=["school_id", "school_year"],
+        on=OFFER_COLS,
+        variable_name="level",
         value_name="offered",
     )
 
     # 4. Clean level labels: offers_es → ES
-    school_year_offered_levels["level"] = (
-        school_year_offered_levels["level"]
-        .str.replace("offers_", "", regex=False)
-        .str.upper()
+    school_year_offered_levels = school_year_offered_levels.with_columns(
+        pl.col("level").str.replace("offers_", "").str.to_uppercase().alias("level")
     )
 
     # 5. Remove offering columns from cleaned_meta
-    cleaned_meta_no_offers = cleaned_meta.drop(columns=OFFER_COLS)
+    cleaned_meta_no_offers = cleaned_meta.drop(OFFER_COLS)
 
     return cleaned_meta_no_offers, school_year_offered_levels
 
 
-def make_school_year_offered_levels(df_long: pd.DataFrame) -> pd.DataFrame:
+def make_school_year_offered_levels(df_long: pl.DataFrame) -> pl.DataFrame:
     """
     Build a long-format dataframe of offered levels per school_id per school_year.
 
@@ -264,35 +285,31 @@ def make_school_year_offered_levels(df_long: pd.DataFrame) -> pd.DataFrame:
     """
 
     # 1. Sort so we can identify latest metadata per school
-    df_sorted = df_long.sort_values(
-        ["school_id", "school_year"], ascending=[True, False]
-    )
+    df_sorted = df_long.sort(["school_id", "school_year"], descending=[False, True])
 
     # 2. Extract latest metadata (contains offer columns)
-    meta_latest = df_sorted.drop_duplicates(subset=["school_id"], keep="first")
+    meta_latest = df_sorted.unique(subset=["school_id"], keep="first")
 
-    offerings = meta_latest[["school_id"] + OFFER_COLS].copy()
+    offerings = meta_latest.select(["school_id"] + OFFER_COLS)
 
     # 3. All school-year pairs present in df_long
     school_years = (
-        df_long[["school_id", "school_year"]]
-        .drop_duplicates()
-        .merge(offerings, on="school_id", how="left")
+        df_long.select(["school_id", "school_year"])
+        .unique()
+        .join(offerings, on="school_id", how="left")
     )
 
     # 4. Long-format melt
-    school_year_offered_levels = school_years.melt(
-        id_vars=["school_id", "school_year"],
-        value_vars=OFFER_COLS,
-        var_name="level",
+    school_year_offered_levels = school_years.unpivot(
+        index=["school_id", "school_year"],
+        on=OFFER_COLS,
+        variable_name="level",
         value_name="offered",
     )
 
     # 5. Clean level names
-    school_year_offered_levels["level"] = (
-        school_year_offered_levels["level"]
-        .str.replace("offers_", "", regex=False)
-        .str.lower()
+    school_year_offered_levels = school_year_offered_levels.with_columns(
+        pl.col("level").str.replace("offers_", "").str.to_lowercase().alias("level")
     )
 
     return school_year_offered_levels
@@ -303,7 +320,7 @@ def make_school_year_offered_levels(df_long: pd.DataFrame) -> pd.DataFrame:
 # -----------------------------------------
 def unpack_enroll_data(
     enrolment_folder: Path, test_only: bool = False
-) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+) -> tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]:
     """
     Outputs:
     - school_year_meta: school-year–level metadata (PSGC-agnostic)
@@ -338,24 +355,22 @@ def unpack_enroll_data(
     ]
 
     rprint("[blue]Extracting school-year metadata...[/blue]")
-    school_year_meta = (
-        df_long[REVISED_COLS]
-        .drop_duplicates(["school_id", "school_year"])
-        .reset_index(drop=True)
+    school_year_meta = df_long.select(REVISED_COLS).unique(
+        subset=["school_id", "school_year"]
     )
 
     # Clean location + school names *once*
     rprint("[blue]Cleaning school-year metadata...[/blue]")
     school_year_meta = clean_meta_location_names(school_year_meta)
-    school_year_meta["school_name"] = school_year_meta["school_name"].apply(
-        clean_school_name
+    school_year_meta = school_year_meta.with_columns(
+        pl.col("school_name").map_elements(clean_school_name, return_dtype=pl.Utf8)
     )
 
     # -----------------------------
     # Enrollment facts (thin)
     # -----------------------------
     rprint("[blue]Extracting enrollment facts...[/blue]")
-    enroll = df_long[
+    enroll = df_long.select(
         [
             "school_year",
             "school_id",
@@ -364,6 +379,6 @@ def unpack_enroll_data(
             "strand",
             "num_students",
         ]
-    ].copy()
+    )
 
     return school_year_meta, enroll, school_year_offered_levels

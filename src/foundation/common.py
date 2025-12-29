@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-import pandas as pd
+import polars as pl
 import yaml
 from environs import Env
 from rich import print as rprint
@@ -22,22 +22,22 @@ env.read_env()
 @dataclass
 class SchoolDataBundle:
     # Reference
-    psgc: pd.DataFrame | None = None
+    psgc: pl.DataFrame | None = None
 
     # Core facts
-    enroll: pd.DataFrame | None = None
-    levels: pd.DataFrame | None = None
+    enroll: pl.DataFrame | None = None
+    levels: pl.DataFrame | None = None
 
     # Metadata (progressively enriched)
-    school_year_meta: pd.DataFrame | None = None
-    meta_psgc: pd.DataFrame | None = None
+    school_year_meta: pl.DataFrame | None = None
+    meta_psgc: pl.DataFrame | None = None
 
     # Address normalization outputs
-    addresses: pd.DataFrame | None = None
-    school_address_year: pd.DataFrame | None = None
+    addresses: pl.DataFrame | None = None
+    school_address_year: pl.DataFrame | None = None
 
     # Geo outputs
-    geo: pd.DataFrame | None = None
+    geo: pl.DataFrame | None = None
 
 
 def prep_table(db: Database, table_name: str, values: list[dict]):
@@ -79,11 +79,14 @@ def run_sql_file(conn: Any, file: Path, prefix_expr: str | None = None):
     conn.commit()
 
 
-def add_to(db: Database, df: pd.DataFrame, table_name: str) -> Database:
+def add_to(db: Database, df: pl.DataFrame, table_name: str) -> Database:
     """Add a `table_name` to the target database `db` sourced from the given dataframe `df`. Presumes
     that the dataframe is already ready for insertion."""
     tbl = db[table_name]
-    rows = df.to_dict(orient="records")
+
+    # Convert Polars to dicts
+    rows = df.to_dicts()
+
     rprint(f"Insert {table_name=} values from [green]{len(rows)=}[/green]")
     tbl.insert_all(rows, pk="id", replace=True)  # type: ignore
     return db

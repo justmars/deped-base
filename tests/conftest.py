@@ -3,7 +3,7 @@ import pathlib
 import tempfile
 from pathlib import Path
 
-import pandas as pd
+import polars as pl
 import pytest
 import yaml
 
@@ -54,9 +54,9 @@ def sample_enrollment_csv(temp_dir):
         "g12_abm_male": [0, 2, 1],
         "g12_abm_female": [1, 1, 0],
     }
-    df = pd.DataFrame(data)
+    df = pl.DataFrame(data)
     file_path = temp_dir / "enrollment_2023-2024.csv"
-    df.to_csv(file_path, index=False)
+    df.write_csv(file_path)
     return file_path
 
 
@@ -66,19 +66,19 @@ def sample_psgc_xlsx(temp_dir):
     data = {
         "10-digit PSGC": [100000000, 128000000, 128010000, 128010010],
         "Name": ["Region I", "Ilocos Norte", "Bacarra", "Libtong"],
-        "Correspondence Code": [1, 128, 12801, 12801001],
+        "Correspondence Code": [1.0, 128.0, 12801.0, 12801001.0],
         "Geographic Level": ["Reg", "Prov", "Mun", "Bgy"],
-        "Old names": [None, None, None, None],
+        "Old names": ["", "", "", ""],
         "City Class": ["", "", "", ""],
         "Income\nClassification (DOF DO No. 074.2024)": ["", "", "", ""],
         "Urban / Rural\n(based on 2020 CPH)": ["", "", "", ""],
-        "2024 Population": [5000000, 600000, 35000, 2000],
-        "Unnamed: 9": [None, None, None, None],  # Extra column
-        "Status": [None, None, None, None],
+        "2024 Population": [5000000.0, 600000.0, 35000.0, 2000.0],
+        "Unnamed: 9": ["", "", "", ""],
+        "Status": ["", "", "", ""],
     }
-    df = pd.DataFrame(data)
+    df = pl.DataFrame(data)
     file_path = temp_dir / "psgc.xlsx"
-    df.to_excel(file_path, sheet_name="PSGC", index=False)
+    df.write_excel(file_path, worksheet="PSGC")
     return file_path
 
 
@@ -91,9 +91,9 @@ def sample_geo_csv(temp_dir):
         "latitude": [18.1234, 18.2345, 18.3456],
         "longitude": [120.5678, 120.6789, 120.7890],
     }
-    df = pd.DataFrame(data)
+    df = pl.DataFrame(data)
     file_path = temp_dir / "geo.csv"
-    df.to_csv(file_path, index=False)
+    df.write_csv(file_path)
     return file_path
 
 

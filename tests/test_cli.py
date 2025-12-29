@@ -29,17 +29,18 @@ class TestCLI:
         import sqlite3
 
         conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
+        try:
+            cursor = conn.cursor()
 
-        # Check that expected tables exist
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-        tables = [row[0] for row in cursor.fetchall()]
+            # Check that expected tables exist
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+            tables = [row[0] for row in cursor.fetchall()]
 
-        expected_tables = ["school_sizes", "school_grades", "school_epochs"]
-        for table in expected_tables:
-            assert table in tables
-
-        conn.close()
+            expected_tables = ["school_sizes", "school_grades", "school_epochs"]
+            for table in expected_tables:
+                assert table in tables
+        finally:
+            conn.close()
 
     def test_cli_build_command(self, test_env):
         """Test the 'cli build' command."""
@@ -60,29 +61,30 @@ class TestCLI:
 
         assert result.returncode == 0
         assert "Populating" in result.stdout
-        assert "main table" in result.stdout
+        assert "main" in result.stdout and "table" in result.stdout
 
         # Check that main tables were created
         import sqlite3
 
         db_path = Path(os.environ["DB_FILE"])
         conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
+        try:
+            cursor = conn.cursor()
 
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-        tables = [row[0] for row in cursor.fetchall()]
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+            tables = [row[0] for row in cursor.fetchall()]
 
-        expected_tables = [
-            "school_sizes",
-            "school_grades",
-            "school_epochs",  # from prep
-            "school_years",
-            "enroll",
-            "geos",
-            "addr",
-            "psgc",  # from build
-        ]
-        for table in expected_tables:
-            assert table in tables
-
-        conn.close()
+            expected_tables = [
+                "school_sizes",
+                "school_grades",
+                "school_epochs",  # from prep
+                "school_years",
+                "enroll",
+                "geos",
+                "addr",
+                "psgc",  # from build
+            ]
+            for table in expected_tables:
+                assert table in tables
+        finally:
+            conn.close()

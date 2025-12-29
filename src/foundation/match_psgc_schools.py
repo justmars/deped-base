@@ -1,4 +1,4 @@
-import pandas as pd
+import polars as pl
 
 from .apply_fixes import fill_missing_psgc
 from .extract_brgy import apply_barangay_corrections, attach_psgc_brgy_id
@@ -10,8 +10,8 @@ from .reorder_columns import reorganize_school_geo_df
 
 
 def match_psgc_schools(
-    psgc_df: pd.DataFrame, school_location_df: pd.DataFrame
-) -> pd.DataFrame:
+    psgc_df: pl.DataFrame, school_location_df: pl.DataFrame
+) -> pl.DataFrame:
     """
     Attach complete PSGC geographic codes (region, province/HUC, municipality,
     barangay) to a school metadata DataFrame.
@@ -39,12 +39,12 @@ def match_psgc_schools(
         * Municipality and barangay normalization rules
 
     Args:
-        psgc_df (pd.DataFrame):
+        psgc_df (pl.DataFrame):
             A DataFrame based on the PSGC Excel source file (e.g. "data/2025-10-13-psgc.xlsx").
             The file must contain the PSGC master sheet with columns such as:
             `id`, `name`, `geo`, `city_class`, `income_class`, etc.
 
-        school_location_df (pd.DataFrame):
+        school_location_df (pl.DataFrame):
             A DataFrame containing cleaned school location metadata.
             Expected fields include (at minimum):
                 - region
@@ -56,7 +56,7 @@ def match_psgc_schools(
             Any additional metadata columns are preserved.
 
     Returns:
-        pd.DataFrame:
+        pl.DataFrame:
             A DataFrame identical to `school_location_df` but enriched with:
 
                 * psgc_region_id
@@ -84,12 +84,16 @@ def match_psgc_schools(
 
     df = fill_missing_psgc(meta_df=manually_corrected_df, psgc_df=psgc_df)
 
-    df["province"] = df["province"].str.title()
+    df = df.with_columns(
+        province=pl.col("province").map_elements(
+            lambda x: x.title() if x else x, return_dtype=pl.Utf8
+        )
+    )
 
     division_lookup = get_divisions(df)
 
-    df = df.merge(
-        division_lookup[["psgc_region_id", "division", "division_id"]],
+    df = df.join(
+        division_lookup.select(["psgc_region_id", "division", "division_id"]),
         on=["psgc_region_id", "division"],
         how="left",
     )

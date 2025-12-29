@@ -1,13 +1,13 @@
-import pandas as pd
+import polars as pl
 from sqlite_utils import Database
 
 from .common import add_to, bulk_update
 
 
-def set_school_strand(db: Database, df: pd.DataFrame, src_table: str):
+def set_school_strand(db: Database, df: pl.DataFrame, src_table: str):
     db = add_to(
         db=db,
-        df=df[["strand"]].drop_duplicates().dropna(subset=["strand"]),
+        df=df[["strand"]].unique().drop_nulls(subset=["strand"]),
         table_name="school_strands",
     )
     bulk_update(
@@ -21,7 +21,7 @@ def set_school_strand(db: Database, df: pd.DataFrame, src_table: str):
     return db
 
 
-def set_enrollment_tables(db: Database, df: pd.DataFrame, src_table: str):
+def set_enrollment_tables(db: Database, df: pl.DataFrame, src_table: str):
     if not db[src_table].exists():
         raise Exception(f"Dependency table {src_table=} missing ")
 
