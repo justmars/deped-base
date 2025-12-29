@@ -54,19 +54,24 @@ class PluginPipeline:
         enroll_dir = env.path("ENROLL_DIR")
         psgc_file = env.path("PSGC_FILE")
         geo_file = env.path("GEO_FILE")
-        default_region_file = (
-            Path(__file__).resolve().parents[1].parent / "data" / "regions.yml"
-        )
+        project_root = Path(__file__).resolve().parents[1].parent
+        default_region_file = project_root / "data" / "regions.yml"
+        default_hr_dir = project_root / "data" / "hr"
         try:
             region_names_file = env.path("REGION_NAMES_FILE")
         except EnvError:
             region_names_file = default_region_file
+        try:
+            hr_dir = env.path("HR_DIR")
+        except EnvError:
+            hr_dir = default_hr_dir
 
         for label, path in (
             ("enroll_dir", enroll_dir),
             ("psgc_file", psgc_file),
             ("geo_file", geo_file),
             ("region_names_file", region_names_file),
+            ("hr_dir", hr_dir),
         ):
             self.console.log(f"[bold slate_blue1]{label}[/bold slate_blue1]={path}")
 
@@ -75,6 +80,7 @@ class PluginPipeline:
             psgc_file=psgc_file,
             geo_file=geo_file,
             region_names_file=region_names_file,
+            hr_dir=hr_dir,
         )
 
     def _load_plugins(self) -> dict[str, BaseExtractor]:

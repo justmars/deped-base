@@ -6,6 +6,7 @@ from pathlib import Path
 import polars as pl
 import pytest
 import yaml
+from openpyxl import Workbook
 
 
 @pytest.fixture
@@ -156,6 +157,46 @@ def sample_fixes_yml(temp_dir):
 
 
 @pytest.fixture
+def sample_hr_xlsx(temp_dir):
+    """Create a sample teacher workbook for tests."""
+
+    hr_dir = temp_dir / "hr"
+    hr_dir.mkdir()
+
+    columns = (
+        ["col1", "col2", "col3", "Lis School ID", "Beis School ID"]
+        + [f"filler_{i}" for i in range(6, 19)]
+        + [f"teacher_role_{i}" for i in range(1, 13)]
+    )
+    rows: list[dict[str, int | None]] = []
+    for idx, sid in enumerate((400001, 400002), start=1):
+        row = {col: None for col in columns}
+        row["Lis School ID"] = sid
+        row["Beis School ID"] = sid + 5000
+        for i in range(1, 13):
+            row[f"teacher_role_{i}"] = (idx * i) + 3
+        rows.append(row)
+
+    df = pl.DataFrame(rows, schema=columns)
+
+    workbook_path = hr_dir / "2022-2023-teachers.xlsx"
+    workbook = Workbook()
+    workbook.remove(workbook.active)
+
+    header_offset = 5
+    for sheet in ("ES DB", "JHS DB", "SHS DB"):
+        ws = workbook.create_sheet(sheet)
+        for _ in range(header_offset):
+            ws.append([None] * len(columns))
+        ws.append(columns)
+        for record in df.to_dicts():
+            ws.append([record[col] for col in columns])
+
+    workbook.save(workbook_path)
+    return hr_dir
+
+
+@pytest.fixture
 def test_env(
     temp_dir,
     sample_enrollment_csv,
@@ -163,6 +204,7 @@ def test_env(
     sample_geo_csv,
     sample_generic_yml,
     sample_fixes_yml,
+    sample_hr_xlsx,
 ):
     """Set up test environment variables."""
     # Create enroll directory and move CSV there
@@ -178,5 +220,6 @@ def test_env(
     os.environ["FIXES_FILE"] = str(sample_fixes_yml)
     os.environ["GEO_FILE"] = str(sample_geo_csv)
     os.environ["PSGC_FILE"] = str(sample_psgc_xlsx)
+    os.environ["HR_DIR"] = str(sample_hr_xlsx)
 
     yield temp_dir

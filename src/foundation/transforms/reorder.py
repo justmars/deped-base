@@ -1,6 +1,6 @@
 import polars as pl
 
-from foundation.common import console
+from ..common import console
 
 
 def reorganize_school_geo_df(df: pl.DataFrame) -> pl.DataFrame:

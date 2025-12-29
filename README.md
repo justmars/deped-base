@@ -44,5 +44,5 @@ cli build      # runs all extractors, validates schemas, and writes the tables
 ## Extensions & docs
 
 - `docs/plugins.md` explains the plugin workflow and how to add new extractors (e.g., teacher data) without touching the orchestration.
-- `docs/plugins/*.md` contains per-extractor reference pages (PSGC loader, enrollment melt, matching, address dimension, geodata) so you can trace each table from source to SQLite.
+- `docs/plugins/*.md` contains per-extractor reference pages (PSGC loader, enrollment melt, matching, address dimension, geodata, and HR teacher counts) so you can trace each table from source to SQLite.
 - `docs/enrolment_origin.md` and `docs/brgy_names.md` provide deeper context for the enrollment source files and PSGC matching edge cases, respectively.

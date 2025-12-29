@@ -1,7 +1,7 @@
 import polars as pl
 from sqlite_utils import Database
 
-from foundation.common import add_to, bulk_update
+from ..common import add_to, bulk_update
 
 
 def set_school_strand(db: Database, df: pl.DataFrame, src_table: str):

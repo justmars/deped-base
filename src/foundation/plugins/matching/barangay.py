@@ -1,6 +1,6 @@
 import polars as pl
 
-from foundation.common import FIXES, console, convert_trailing_roman, normalize_geo_name
+from ...common import FIXES, console, convert_trailing_roman, normalize_geo_name
 
 
 def fix_barangay_enye_value(barangay):

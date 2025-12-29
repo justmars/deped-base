@@ -16,6 +16,7 @@ class SourcePaths:
     psgc_file: Path
     geo_file: Path
     region_names_file: Path
+    hr_dir: Path
 
 
 @dataclass(frozen=True)

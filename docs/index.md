@@ -11,6 +11,7 @@ This site collects the knowledge needed to generate the `cli build` dataset (enr
    - `PsgcMatchingExtractor`: joins the metadata to PSGC hierarchies and resolves divisions.
    - `AddressDimensionExtractor`: hashes PSGC combos into `_addr_hash`/`address_id` pairs.
    - `GeoExtractor`: attaches coordinates and `address_id` to produce the final geography frame.
+   - `TeachersExtractor`: melts the HR workbooks from `HR_DIR`, canonicalizes the LIS/BEIS IDs, and exposes the `teachers` fact plus the `teacher_positions` lookup (see [docs/plugins/hr.md](./plugins/hr.md)).
 3. Each extractor logs `[green]Validated schema` when its tables pass contract checks in `src/foundation/schema.py`, and `cli build` persists the resulting DataFrames (`psgc`, `enroll`, `geos`, `addr`, etc.) via the legacy loaders.
 
 ## Extending with more data
@@ -24,4 +25,5 @@ This site collects the knowledge needed to generate the `cli build` dataset (enr
 
 - [`docs/enrolment_origin.md`](enrolment_origin.md) explains the wide-format enrollment CSVs and the strategy for cleanly parsing `<grade>[_<strand>]_sex`.
 - [`docs/brgy_names.md`](brgy_names.md) shows how the matching pipeline surfaces unmatched barangays for manual review.
+- [`docs/schema-teachers.md`](schema-teachers.md) describes the `teachers` table contract, the worksheet layout expectations, and how the extractor feeds that schema.
 To dig into a specific extractor, see the individual pages under `docs/plugins/`.

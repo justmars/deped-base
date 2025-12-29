@@ -41,6 +41,7 @@ package = true
 
 [tool.pytest.ini_options]
 minversion = "9.0"
+pythonpath = "src"
 addopts = "-ra -q -vv --cov --doctest-modules"
 testpaths = ["tests", "src"]
 

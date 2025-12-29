@@ -17,6 +17,7 @@ Each extractor now participates in that pipeline as a discrete plugin: it declar
 | 4 | `PsgcMatchingExtractor` | Matches school metadata to PSGC codes (regions → provinces → barangays). | [Matching extractor](/docs/plugins/matching.md) |
 | 5 | `AddressDimensionExtractor` | Builds canonical `_addr_hash` + address bridge table. | [Address extractor](/docs/plugins/address.md) |
 | 6 | `GeoExtractor` | Joins coordinates plus address IDs to enrich the geography fact table. | [Geodata extractor](/docs/plugins/geodata.md) |
+| 7 | `TeachersExtractor` | Loads HR teacher workbooks, normalizes the headcount columns by level, and exposes `teachers` + lookup tables for downstream analytics. | [Teacher plugin](/docs/plugins/hr.md) |
 
 Any new extractor that follows this contract plugs into `cli build` automatically; no further orchestration edits are required. The pipeline log will print `[green]Validated schema[/green] <table>` once every table passes validation.
 
@@ -99,6 +100,7 @@ Once the schema is defined, your `TeachersExtractor` is auto-discovered by `Plug
 
 - `/data/generic.yml` seeds the generic lookup tables (`school_sizes`, `school_levels`, etc.) via `cli prep`.
 - `/data/regions.yml` now holds the canonical region alias catalog that `RegionNamesExtractor` loads after the PSGC table exists.
+- `/data/hr/` stores the teacher workbooks (`YYYY-YYYY-teachers.xlsx`) that the new `TeachersExtractor` ingests. Each workbook keeps the same layout that the HR team shares, so simply dropping the files into this folder (or pointing `HR_DIR` elsewhere) is enough for the pipeline to pick them up.
 - Keep these files in the repository so the pipeline and tests can reuse them, and update the YAML whenever new aliases or reference values are needed.
 
 ## Hooking up new plugins
@@ -115,6 +117,8 @@ Whenever you add a plugin with its own source file, extend the “standard opera
 2. **Use the env var in the extractor**: read the path via `env.path("<VAR_NAME>", default=Path(...))` or expose it through `SourcePaths` so the plugin uses the configured location rather than hard-coded paths.
 3. **Update the plugin doc** (`docs/plugins/<name>.md`): add a “Source” section detailing the env var, expected file format, and any defaults so users know what to edit before running `cli build`.
 4. **Add a regression test** that exercises the extractor with the standard env fixture to ensure the new file is loaded correctly.
+
+The teacher/headcount plugin exposes `HR_DIR` (default `data/hr`). Document that directory in `docs/plugins/hr.md`, underline that each workbook needs a year-range filename plus the expected worksheets, and remind operators that `cli build` reruns the plugin every time it runs so dropping new workbooks into the folder is enough for recomputation.
 
 Following those steps keeps every extractor’s inputs discoverable, configurable, and documented alongside the plugin itself.
 

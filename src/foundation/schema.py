@@ -166,6 +166,18 @@ REGION_NAMES_SCHEMA = TableSchema(
     ],
 )
 
+TEACHERS_SCHEMA = TableSchema(
+    name="teachers",
+    primary_key=["school_year", "school_id", "level", "position"],
+    columns=[
+        ColumnDef("school_year", pl.Utf8, nullable=False),
+        ColumnDef("school_id", pl.Utf8, nullable=False),
+        ColumnDef("level", pl.Utf8, nullable=False),
+        ColumnDef("position", pl.Utf8, nullable=False),
+        ColumnDef("num", pl.Int64),
+    ],
+)
+
 SCHEMAS = {
     "psgc": PSGC_SCHEMA,
     "enrollment": ENROLLMENT_SCHEMA,
@@ -175,4 +187,5 @@ SCHEMAS = {
     "address": ADDRESS_SCHEMA,
     "geo": GEO_SCHEMA,
     "region_names": REGION_NAMES_SCHEMA,
+    "teachers": TEACHERS_SCHEMA,
 }

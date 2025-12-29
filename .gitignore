@@ -8,6 +8,7 @@
 .env.*
 # this is unofficial
 data/enroll/enrollment_2025-2026.csv
+hr/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

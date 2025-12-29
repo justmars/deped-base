@@ -6,7 +6,6 @@ from src.foundation.pipeline import ExtractedFrames, extract_dataframes
 class TestDataFrameExtraction:
     def test_extract_dataframes(self, test_env):
         """Test the main dataframe extraction function."""
-        from src.foundation.common import env
 
         # This should work with our test environment
         frames: ExtractedFrames = extract_dataframes()

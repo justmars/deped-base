@@ -2,7 +2,7 @@ from pathlib import Path
 
 import polars as pl
 
-from foundation.common import FIXES
+from ..common import FIXES
 
 
 # ========================================================

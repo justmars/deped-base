@@ -1,6 +1,6 @@
 import polars as pl
 
-from foundation.common import console, normalize_geo_name
+from ...common import console, normalize_geo_name
 
 
 def prepare_psgc(psgc: pl.DataFrame) -> pl.DataFrame:

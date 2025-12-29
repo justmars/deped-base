@@ -3,9 +3,8 @@ from pathlib import Path
 
 import polars as pl
 
-from foundation.common import console
-from foundation.plugin import BaseExtractor, ExtractionContext, ExtractionResult
-
+from ..common import console
+from ..plugin import BaseExtractor, ExtractionContext, ExtractionResult
 from ..transforms.location import clean_meta_location_names
 from ..transforms.school_name import clean_school_name
 

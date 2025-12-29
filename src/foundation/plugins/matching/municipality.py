@@ -3,7 +3,7 @@ from collections.abc import Iterable
 
 import polars as pl
 
-from foundation.common import console, normalize_geo_name
+from ...common import console, normalize_geo_name
 
 
 def _allowed_prefixes_from_provhuc(provhuc_value) -> set[str]:

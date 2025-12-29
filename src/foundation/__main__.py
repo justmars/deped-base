@@ -77,6 +77,9 @@ def build():
         region_names = pipeline.get_output_table(output, "region_names")
         if region_names is not None:
             db = add_to(db=db, df=region_names, table_name="region_names")
+        teachers = pipeline.get_output_table(output, "teachers")
+        if teachers is not None:
+            db = _load_teacher_tables(db=db, teachers_df=teachers)
     finally:
         db.close()
 
@@ -182,6 +185,31 @@ def _load_geography_tables(
     db = add_to(db=db, df=data.psgc, table_name="psgc")
 
     _attach_psgc_foreign_keys(db=db, geo_table=geo_table)
+    return db
+
+
+def _load_teacher_tables(db: Database, teachers_df: pl.DataFrame) -> Database:
+    """Insert teacher headcounts and derive helper tables."""
+
+    if teachers_df.height == 0:
+        return db
+
+    db = add_to(db=db, df=teachers_df, table_name="teachers")
+    bulk_update(
+        db=db,
+        tbl_name="teachers",
+        target_col="school_year",
+        dependency_tbl="school_years",
+        fk_col="school_year_id",
+        source_col="school_year",
+    )
+
+    db["teachers"].extract(  # type: ignore
+        columns="position",
+        table="teacher_positions",
+        fk_column="teacher_position_id",
+    )
+
     return db
 
 

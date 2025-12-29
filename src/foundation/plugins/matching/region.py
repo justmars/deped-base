@@ -1,6 +1,6 @@
 import polars as pl
 
-from foundation.common import PSGC_REGION_MAP, console, normalize_region_name
+from ...common import PSGC_REGION_MAP, console, normalize_region_name
 
 
 def map_psgc_region(region_name: str, psgc_map: dict) -> str | None:
