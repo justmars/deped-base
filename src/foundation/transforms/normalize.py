@@ -1,33 +1,56 @@
+"""Normalization helpers shared across PSGC/matching extractors."""
+
+from __future__ import annotations
+
 import re
 
 import polars as pl
 
 
 def _digits_only(s: str) -> str:
-    """Return only the digits from the string, or '' if NA."""
+    """Return only the digits contained in a string or empty when missing.
+
+    Args:
+        s: Input string to sanitize.
+
+    Returns:
+        Digits extracted from ``s`` or an empty string if ``s`` is None or blank.
+    """
     if s is None:
         return ""
     return re.sub(r"\D", "", str(s))
 
 
-def get_unique_regions(df: pl.DataFrame):
+def get_unique_regions(df: pl.DataFrame) -> pl.DataFrame:
+    """Return distinct PSGC region IDs and their normalized names.
+
+    Args:
+        df: DataFrame containing ``psgc_region_id`` and ``region`` columns.
+
+    Returns:
+        DataFrame with two columns: ``id`` (psgc region) and ``name`` (region name),
+        sorted by ``id``.
+    """
     _df = df.select(["psgc_region_id", "region"]).unique()
     _df = _df.rename({"psgc_region_id": "id", "region": "name"})
-    _df = _df.sort("id")
-    return _df
+    return _df.sort("id")
 
 
 def get_unique_provinces(df: pl.DataFrame, psgc_df: pl.DataFrame) -> pl.DataFrame:
-    """
-    Extract unique provinces from df['psgc_provhuc_id'], canonicalize them
-    to the first 5 digits, match to PSGC masterlist where geo == 'Prov',
-    and return authoritative province PSGC id, province name,
-    and the region PSGC code per province.
+    """Canonicalize province PSGC IDs and attach their region references.
 
-    Returns columns:
-        - id        (from PSGC master, authoritative)
-        - name   (canonical PSGC name)
-        - region_id    (PSGC region code, 2 digits or full PSGC id depending on PSGC file)
+    This helper trims incoming ``psgc_provhuc_id`` values to the first five
+    digits, matches them to the authoritative PSGC province list, and then
+    tags each province with the region ``psgc`` identifier derived from the
+    province code prefix.
+
+    Args:
+        df: Source schools DataFrame that contains ``psgc_provhuc_id``.
+        psgc_df: Master PSGC table with ``id``, ``geo``, and ``name``.
+
+    Returns:
+        DataFrame with columns ``id`` (authoritative province id), ``name``,
+        and ``region_id`` (linked PSGC region id).
     """
 
     # --- 1) Clean school dataframe province IDs ---
@@ -75,38 +98,19 @@ def get_unique_provinces(df: pl.DataFrame, psgc_df: pl.DataFrame) -> pl.DataFram
     return final
 
 
-def get_divisions(df: pl.DataFrame):
-    """Generate a unique division lookup table from a PSGC-aligned dataframe.
+def get_divisions(df: pl.DataFrame) -> pl.DataFrame:
+    """Generate deterministic division identifiers grouped by region.
 
-    This function extracts unique (region, division) pairs from the input
-    dataframe and assigns each division a deterministic ID within its region.
-    The ID is created by ordering divisions alphabetically within each region
-    and assigning a sequential counter. The resulting identifier takes the form:
-
-        "<psgc_region_id>-<sequence_number>"
-
-    For example, if Region 01 has three divisions sorted alphabetically,
-    their division IDs will be: `01-1`, `01-2`, `01-3`.
+    Sequentially numbers each unique division within a region and composes a
+    ``division_id`` of the form ``<psgc_region_id>-<division_seq>`` which can
+    be used as a stable key.
 
     Args:
-        df (pl.DataFrame): A dataframe containing at least the columns
-            `psgc_region_id` (region code) and `division`
-            (DepEd division name).
+        df: Input frame containing ``psgc_region_id`` and ``division`` columns.
 
     Returns:
-        pl.DataFrame: A dataframe with one row per unique division containing:
-            - psgc_region_id (str or int): PSGC region code.
-            - division (str): Division name.
-            - division_seq (int): Sequential index of the division within
-              its region (starting at 1).
-            - division_id (str): Deterministic division identifier formed as
-              "<psgc_region_id>-<division_seq>".
-
-    Notes:
-        - Sorting is alphabetical by division name within each region.
-        - Output is stable as long as the region and division values do not change.
-        - Additional metadata columns in the input dataframe are ignored.
-
+        DataFrame with unique combinations of regions and divisions, along with
+        ``division_seq`` and ``division_id``.
     """
     div = (
         df.select(["psgc_region_id", "division"])

@@ -2,7 +2,7 @@ from pathlib import Path
 
 import polars as pl
 
-from ..plugin import BaseExtractor, ExtractionContext, ExtractionResult
+from foundation.plugin import BaseExtractor, ExtractionContext, ExtractionResult
 
 
 def set_psgc(f: Path) -> pl.DataFrame:

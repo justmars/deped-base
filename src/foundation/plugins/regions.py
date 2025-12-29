@@ -3,7 +3,7 @@ from pathlib import Path
 import polars as pl
 import yaml
 
-from ..plugin import BaseExtractor, ExtractionContext, ExtractionResult
+from foundation.plugin import BaseExtractor, ExtractionContext, ExtractionResult
 
 
 def _load_region_aliases(regions_file: Path) -> list[dict[str, str]]:

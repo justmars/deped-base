@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 import polars as pl
 
-from ..plugin import BaseExtractor, ExtractionContext, ExtractionResult
+from foundation.plugin import BaseExtractor, ExtractionContext, ExtractionResult
 
 ADDR_KEY_COLS = [
     "psgc_region_id",

@@ -3,8 +3,7 @@ from pathlib import Path
 import polars as pl
 
 from foundation.common import console
-
-from ..plugin import BaseExtractor, ExtractionContext, ExtractionResult
+from foundation.plugin import BaseExtractor, ExtractionContext, ExtractionResult
 
 
 def set_coordinates(geo_file: Path, meta_df: pl.DataFrame) -> pl.DataFrame:
